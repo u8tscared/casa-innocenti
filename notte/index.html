@@ -1918,7 +1918,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   const E = { q: {}, slot: '', day: '', order: null, pollT: 0, on: false };
   /* the rayons ticked « À emporter » in Growth Gusto (Boutique › Rayons); a menu published before that setting: guessed by name */
   const midiItems = () => { const M = G.menu; if (!M) return []; const em = {}; (M.cats || []).forEach((c) => { em[c.id] = typeof c.em === 'boolean' ? c.em : MIDI.test(c.id || '') || MIDI.test(c.t || ''); });
-    return M.items.filter((it) => it.p > 0 && !it.gaspi && em[it.c]); };
+    return M.items.filter((it) => it.p > 0 && !it.gaspi && (typeof it.em === 'boolean' ? it.em : em[it.c])); };
   function emporter() {
     const box = $('#asporto'); if (!box || !G.menu) return;
     if (!E.on) { /* drop the site's demo handlers (fake ticket) once: fresh copies of the menu and the form */
