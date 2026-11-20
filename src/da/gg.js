@@ -90,6 +90,30 @@
     renderCart0.apply(this, arguments);
     $$('#cart-items .qty').forEach((q) => { const b = q.querySelector('[data-add]'), k = b && b.dataset.add, it = k && gItem(k); if (!it || !it.kg) return; const sp = q.querySelector('span'); if (sp) sp.textContent = gT(cart[k] * it.kg.step); });
   };
+  /* product sheet: the Growth Gusto description; sold by weight = choose the grams there (the + opens it) */
+  const QW = [1, 2, 3, 5, 10];
+  function qvFix() {
+    const qv = $('#qv'); if (!qv || !document.documentElement.classList.contains('qv-open')) return;
+    const n = (qv.querySelector('.qv-name') || {}).textContent; const it = Object.values(G.by).find((x) => x.t === n); if (!it) return;
+    const kg = it.kg && +it.kg.step > 0, dd = [it.b, it.kg ? '' : it.w].filter(Boolean).join(' · ');
+    qv.querySelector('.qv-desc').textContent = kg ? `Vendu au poids : ${eur(+it.kg.pkg)} le kilo. Choisissez la quantité.` : (it.d || dd);
+    const w = qv.querySelector('.qv-w');
+    if (w) w.innerHTML = kg ? QW.filter((m) => m <= Math.max(1, left(it.id))).map((m) => `<button type="button" class="chip${m === 1 ? ' on' : ''}" data-mult="${m}">${gT(m * it.kg.step)}</button>`).join('') : it.w ? `<span class="chip on">${esc(it.w)}</span>` : '';
+    const nt = qv.querySelector('.qv-note'); if (nt) { nt.hidden = !kg; nt.textContent = 'Coupé à la commande au poids choisi, emballé dans du papier paraffiné.'; }
+  }
+  document.addEventListener('click', (e) => {
+    if (!G.menu) return;
+    const ad = e.target.closest('.prod [data-add]');
+    if (ad) { const it = gItem(ad.dataset.add); if (it && it.kg && !(cart[it.id] > 0)) { e.stopImmediatePropagation(); e.preventDefault(); const h = ad.closest('.prod').querySelector('.prod-name'); if (h) h.click(); return; } }
+    if (e.target.closest('.prod') && !e.target.closest('button')) setTimeout(qvFix, 0);
+    const qa = e.target.closest('.qv-add');
+    if (qa) setTimeout(() => { const it = gItem(qa.dataset.add), t = $('#toast'); if (it && it.kg && t) t.textContent = `${it.t} · ${gT(cart[it.id] * it.kg.step)} dans le panier`; }, 300);
+  }, true);
+  /* the card says « au poids » on its button */
+  const card1 = card;
+  card = function (p) { // eslint-disable-line no-global-assign
+    const h = card1.apply(this, arguments), it = G.by[p.id]; return it && it.kg ? h.replace('>Ajouter au panier</button>', '>Choisir le poids</button>') : h;
+  };
   /* never more than what is left */
   document.addEventListener('click', (e) => {
     const a = e.target.closest('[data-add]'); if (!a || !G.menu) return;
