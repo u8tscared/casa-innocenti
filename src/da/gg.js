@@ -11,6 +11,8 @@
   try { if (q === 'off') localStorage.removeItem(LS); else if (q) localStorage.setItem(LS, q); } catch (e) {}
   let rid = GG_RID; try { rid = (q && q !== 'off' ? q : localStorage.getItem(LS)) || GG_RID; } catch (e) {}
   if (!rid || !/^[A-Za-z0-9_-]{4,80}$/.test(rid)) return;
+  /* how product photos look on the cards (Marceau picks): 1 vitrine blanche · 2 arche de couleur · 3 plein cadre · 4 étiquette d'épicerie */
+  const GG_STYLE = 1;
   const SRC = 'https://app.growthgusto.fr/w/gg-boutique.js';
   const G = { menu: null, by: {}, order: null, pollT: 0, slot: '' };
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -32,7 +34,19 @@
 .gg-st{display:grid;gap:10px;justify-items:start}.gg-st .stamp{transform:rotate(-6deg)}.gg-st .gg-wait{display:flex;gap:10px;align-items:center;color:var(--mute)}
 .gg-dots{display:inline-flex;gap:4px}.gg-dots i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:ggd 1.2s infinite}.gg-dots i:nth-child(2){animation-delay:.15s}.gg-dots i:nth-child(3){animation-delay:.3s}
 @keyframes ggd{0%,80%,100%{opacity:.25}40%{opacity:1}}@media(prefers-reduced-motion:reduce){.gg-dots i{animation:none}}`;
-    document.head.appendChild(s);
+    s.textContent += `
+/* product photos: one of 4 looks (GG_STYLE), only on cards that have a real photo */
+.gg-s1 .prod.gg-hp .prod-img{background:#fff;border:1px solid var(--line);border-radius:0}
+.gg-s1 .prod.gg-hp .prod-img .gg-ph{inset:9% 12% 16%;width:76%;height:75%;object-fit:contain;mix-blend-mode:multiply;z-index:1}
+.gg-s1 .prod.gg-hp .prod-img:after{content:'';position:absolute;left:22%;right:22%;bottom:11%;height:16px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.2),transparent 70%)}
+.gg-s2 .prod.gg-hp .prod-img .gg-ph{inset:14% 12% 8%;width:76%;height:78%;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 12px 14px rgba(0,0,0,.14))}
+.gg-s3 .prod.gg-hp .prod-img{border-radius:0;background:#111}.gg-s3 .prod.gg-hp .prod-img .gg-ph{inset:0;width:100%;height:100%;object-fit:cover}
+.gg-s3 .prod.gg-hp:hover .prod-img .gg-ph{transform:scale(1.05)}
+.gg-s4 .prod.gg-hp{background:var(--card);padding:10px;border:1px solid var(--line)}.gg-s4 .prod.gg-hp .prod-img{background:#fff;border:1px solid var(--line);border-radius:0}
+.gg-s4 .prod.gg-hp .prod-img .gg-ph{inset:7%;width:86%;height:86%;object-fit:contain}.gg-s4 .prod.gg-hp .prod-meta{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.gg-s1 .prod.gg-hp:hover .prod-img .gg-ph,.gg-s2 .prod.gg-hp:hover .prod-img .gg-ph,.gg-s4 .prod.gg-hp:hover .prod-img .gg-ph{transform:translateY(-4%) scale(1.04)}
+.as-item .as-ill .gg-ph{object-fit:contain;background:#fff;mix-blend-mode:multiply}`;
+    document.head.appendChild(s); document.documentElement.classList.add('gg-s' + GG_STYLE);
   }
 
   /* the catalogue: Growth Gusto's products replace the example ones (photo, price, shelf, stock) */
@@ -63,7 +77,8 @@
   const card0 = card;
   card = function (p, i) { // eslint-disable-line no-global-assign
     let h = card0(p, i).replace(/<p class="prod-desc"> · /, '<p class="prod-desc">').replace(/ · <\/p>/, '</p>'); const it = p.gg; if (!it) return h;
-    if (it.out || it.left === 0) h = h.replace('class="prod rv"', 'class="prod rv gg-out"').replace('<span class="prod-price">', '<span class="prod-price"><span class="gg-stk">Épuisé</span> ');
+    if (it.ph) h = h.replace('class="prod rv"', 'class="prod rv gg-hp"');
+    if (it.out || it.left === 0) h = h.replace('class="prod rv', 'class="prod rv gg-out').replace('<span class="prod-price">', '<span class="prod-price"><span class="gg-stk">Épuisé</span> ');
     else if (it.few && it.left != null) h = h.replace(`${p.d} · ${p.w}</p>`, `${p.d} · ${p.w}<span class="gg-stk">${it.left === 1 ? 'Dernier' : 'Plus que ' + it.left}</span></p>`);
     return h;
   };
