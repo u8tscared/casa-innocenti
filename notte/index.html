@@ -1708,7 +1708,13 @@ const CI = (() => {
   /* how product photos look on the cards (Marceau picks): 1 vitrine blanche · 2 arche de couleur · 3 plein cadre · 4 étiquette d'épicerie */
   const GG_STYLE = 1;
   const SRC = 'https://app.growthgusto.fr/w/gg-boutique.js';
-  const G = { menu: null, by: {}, order: null, pollT: 0, slot: '' };
+  const G = { menu: null, by: {}, order: null, pollT: 0, slot: '', day: '' };
+  /* « Commander à l'avance » (Growth Gusto › À emporter): the open days, then the hours of the chosen day */
+  const tday = () => (GGBoutique.today ? GGBoutique.today() : new Date().toISOString().slice(0, 10));
+  const dset = (m) => (GGBoutique.days ? GGBoutique.days(m) : [tday()]);
+  const dnext = (k, n) => new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n)).toISOString().slice(0, 10);
+  const dTxt = (k, chip) => { const t = tday(); if (!k || k === t) return chip ? 'Aujourd’hui' : 'aujourd’hui'; if (k === dnext(t, 1)) return chip ? 'Demain' : 'demain'; const s = new Date(k + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'UTC', weekday: chip ? 'short' : 'long', day: 'numeric', month: chip ? undefined : 'long' }); return chip ? s.charAt(0).toUpperCase() + s.slice(1) : 'le ' + s; };
+  const dHtml = (D, cur) => (D.length > 1 ? `<div class="gg-slots gg-days" role="radiogroup" aria-label="Jour de retrait">${D.map((k) => `<button type="button" role="radio" aria-checked="${k === cur}" class="${k === cur ? 'on' : ''}" data-ggd="${k}">${dTxt(k, true)}</button>`).join('')}</div>` : '');
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => '&#' + c.charCodeAt(0) + ';');
   const hmFr = (s) => String(s || '').replace(':', 'h');
@@ -1723,8 +1729,10 @@ const CI = (() => {
     const s = document.createElement('style');
     s.textContent = `.gg-stk{display:inline-block;margin-left:6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--rosso,#B3262E)}
 .prod.gg-out{opacity:.55}.prod.gg-out .add,.prod.gg-out .quick{pointer-events:none;opacity:.4}
+html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,html.co-open body{overflow:hidden;overscroll-behavior:none}html.qv-open body,html.co-open body,html.cart-open body{touch-action:none}.drawer,.qv-panel,.co-panel,.co-panel *,.drawer *,.qv-panel *{touch-action:pan-y;overscroll-behavior:contain}
 .gg-live{display:flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}.gg-live i{width:7px;height:7px;border-radius:50%;background:var(--verde,#2E9E5B);box-shadow:0 0 0 4px color-mix(in srgb,var(--verde,#2E9E5B) 20%,transparent)}
-.gg-slots{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}.gg-slots button{padding:10px 14px;border:1px solid var(--line);font-variant-numeric:tabular-nums}.gg-slots button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.gg-slots{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}.gg-slots button{padding:10px 14px;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.gg-days{margin-bottom:10px}.gg-slots button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .gg-ph{width:100%;height:100%;object-fit:cover;display:block}.gg-ini{display:grid!important;place-items:center;width:100%;height:100%;font:600 42px/1 Georgia,serif;font-style:italic;color:var(--fg);opacity:.55}
 .gg-none{color:var(--mute)}.gg-none a{text-decoration:underline}.gg-paye{margin:6px 0 0;font-size:14px;color:var(--mute)}.as-item.gg-out{opacity:.55}#asporto .gg-wait{display:flex;gap:8px;align-items:center;color:var(--mute)}.gg-err{color:var(--rosso,#B3262E);font-size:14px;min-height:1.2em}
 .gg-st{display:grid;gap:10px;justify-items:start}.gg-st .stamp{transform:rotate(-6deg)}.gg-st .gg-wait{display:flex;gap:10px;align-items:center;color:var(--mute)}
@@ -1784,6 +1792,10 @@ const CI = (() => {
     renderCart0.apply(this, arguments);
     $$('#cart-items .qty').forEach((q) => { const b = q.querySelector('[data-add]'), k = b && b.dataset.add, it = k && gItem(k); if (!it || !it.kg) return; const sp = q.querySelector('span'); if (sp) sp.textContent = gT(cart[k] * it.kg.step); });
   };
+  /* an open sheet (product, cart, checkout) freezes the page behind it */
+  const frozen = () => /(^| )(qv|cart|co)-open( |$)/.test(document.documentElement.className);
+  const inPanel = (t) => t && t.closest && t.closest('.qv-panel, .drawer, .co-panel');
+  ['wheel', 'touchmove'].forEach((ev) => document.addEventListener(ev, (e) => { if (frozen() && !inPanel(e.target)) e.preventDefault(); }, { passive: false }));
   /* product sheet: the Growth Gusto description; sold by weight = choose the grams there (the + opens it) */
   const QW = [1, 2, 3, 5, 10];
   function qvFix() {
@@ -1837,12 +1849,12 @@ const CI = (() => {
     if (mode[0]) mode[0].querySelector('span').textContent = '30 Grande Rue · gratuit · paiement sur place';
     /* step 1: the times Growth Gusto accepts today */
     const pk = $('.co-picker', co); const nav1 = steps[1] && $('[data-next]', steps[1]);
-    const paintSlots = () => { const L = GGBoutique.slots(G.menu); if (!L.includes(G.slot)) G.slot = L[0] || '';
-      pk.innerHTML = L.length ? `<p class="gg-live"><i></i>Aujourd’hui, l’équipe confirme l’heure</p><div class="gg-slots" role="radiogroup" aria-label="Heure de retrait">${L.map((s) => `<button type="button" role="radio" aria-checked="${s === G.slot}" class="${s === G.slot ? 'on' : ''}" data-ggs="${s}">${hmFr(s)}</button>`).join('')}</div>`
+    const paintSlots = () => { const D = dset(G.menu); if (!D.includes(G.day)) G.day = D[0] || ''; const L = G.day ? GGBoutique.slots(G.menu, G.day) : []; if (!L.includes(G.slot)) G.slot = L[0] || '';
+      pk.innerHTML = L.length ? `${dHtml(D, G.day)}<p class="gg-live"><i></i>${D.length > 1 ? 'Choisissez le jour et l’heure, l’équipe confirme' : 'Aujourd’hui, l’équipe confirme l’heure'}</p><div class="gg-slots" role="radiogroup" aria-label="Heure de retrait">${L.map((s) => `<button type="button" role="radio" aria-checked="${s === G.slot}" class="${s === G.slot ? 'on' : ''}" data-ggs="${s}">${hmFr(s)}</button>`).join('')}</div>`
         : '<p class="gg-none">Plus de retrait possible aujourd’hui. Revenez demain, ou appelez le 09 63 67 76 39.</p>';
       if (nav1) nav1.disabled = !G.slot; whenTxt(); };
-    const whenTxt = () => { const w = $('.co-when', co); if (w) w.textContent = G.slot ? `Retrait aujourd’hui à ${hmFr(G.slot)}, à confirmer par la boutique` : ''; };
-    pk.addEventListener('click', (e) => { const b = e.target.closest('[data-ggs]'); if (!b) return; e.stopPropagation(); G.slot = b.dataset.ggs; paintSlots(); }, true);
+    const whenTxt = () => { const w = $('.co-when', co); if (w) w.textContent = G.slot ? `Retrait ${dTxt(G.day)} à ${hmFr(G.slot)}, à confirmer par la boutique` : ''; };
+    pk.addEventListener('click', (e) => { const d = e.target.closest('[data-ggd]'); if (d) { e.stopPropagation(); G.day = d.dataset.ggd; G.slot = ''; paintSlots(); return; } const b = e.target.closest('[data-ggs]'); if (!b) return; e.stopPropagation(); G.slot = b.dataset.ggs; paintSlots(); }, true);
     $('.drawer .pay')?.addEventListener('click', () => setTimeout(() => { paintSlots(); const p = $('#co-pay'); }, 0));
     /* step 3: send, no card */
     if (steps[3]) {
@@ -1860,7 +1872,7 @@ const CI = (() => {
       if (!G.slot) { er.textContent = 'Choisissez une heure de retrait.'; return; }
       b.disabled = true; b.textContent = 'Envoi…'; er.textContent = '';
       try {
-        const r = await GGBoutique.order(rid, { items: items.map((x) => ({ id: x.it.id, q: x.q })), name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot });
+        const r = await GGBoutique.order(rid, { items: items.map((x) => ({ id: x.it.id, q: x.q })), name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
         G.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...G.order, at: Date.now() })); } catch (e) {}
         Object.keys(cart).forEach((k) => cart[k] = 0); renderCart();
@@ -1885,7 +1897,7 @@ const CI = (() => {
 
   /* ───────── À emporter: the ready-to-eat shelves of Growth Gusto (Plats du midi, arancini…), sent like the cart ───────── */
   const MIDI = /midi|arancin|traiteur|panin|pizza|sandwich|focacc|formule|snack|à emporter|emporter/i;
-  const E = { q: {}, slot: '', order: null, pollT: 0, on: false };
+  const E = { q: {}, slot: '', day: '', order: null, pollT: 0, on: false };
   const midiItems = () => { const M = G.menu; if (!M) return []; const cat = {}; (M.cats || []).forEach((c) => { cat[c.id] = c.t; });
     return M.items.filter((it) => it.p > 0 && !it.gaspi && (MIDI.test(it.c || '') || MIDI.test(cat[it.c] || ''))); };
   function emporter() {
@@ -1896,7 +1908,7 @@ const CI = (() => {
       const seg = $('.seg', box); if (seg) seg.outerHTML = '<p class="gg-paye">Vous réglez au retrait, par carte ou en espèces.</p>';
       $('.as-menu', box).addEventListener('click', (e) => { const b = e.target.closest('[data-m]'); if (!b) return; const id = b.closest('.as-item').dataset.id;
         const mx = left(id); E.q[id] = Math.max(0, Math.min(mx, (E.q[id] || 0) + +b.dataset.m)); paintMenu(); refresh(); });
-      $('.as-picker', box).addEventListener('click', (e) => { const b = e.target.closest('[data-ggs]'); if (!b) return; E.slot = b.dataset.ggs; paintSlots(); refresh(); });
+      $('.as-picker', box).addEventListener('click', (e) => { const d = e.target.closest('[data-ggd]'); if (d) { E.day = d.dataset.ggd; E.slot = ''; paintSlots(); refresh(); return; } const b = e.target.closest('[data-ggs]'); if (!b) return; E.slot = b.dataset.ggs; paintSlots(); refresh(); });
       ['#as-name', '#as-tel'].forEach((k) => $(k, box)?.addEventListener('input', refresh));
       $('.as-form', box).addEventListener('submit', (e) => { e.preventDefault(); send(); });
       box.addEventListener('click', (e) => { if (e.target.closest('#gg-as-new')) { clearTimeout(E.pollT); E.order = null; E.q = {}; $('.ticket', box).classList.remove('done'); paintMenu(); refresh(); } });
@@ -1912,18 +1924,18 @@ const CI = (() => {
         : '<p class="gg-none">Les plats du midi ne sont pas encore en ligne. En attendant, faites vos courses dans la <a href="#boutique">boutique</a>, ou appelez le 09 63 67 76 39.</p>';
     }
     function paintSlots() {
-      const pk = $('.as-picker', box), L = G.menu.open ? GGBoutique.slots(G.menu) : []; if (!L.includes(E.slot)) E.slot = L[0] || '';
-      pk.innerHTML = L.length ? `<p class="gg-live"><i></i>Aujourd’hui, l’équipe confirme l’heure</p><div class="gg-slots" role="radiogroup" aria-label="Heure de retrait">${L.map((x) => `<button type="button" role="radio" aria-checked="${x === E.slot}" class="${x === E.slot ? 'on' : ''}" data-ggs="${x}">${hmFr(x)}</button>`).join('')}</div>`
+      const pk = $('.as-picker', box), D = G.menu.open ? dset(G.menu) : []; if (!D.includes(E.day)) E.day = D[0] || ''; const L = E.day ? GGBoutique.slots(G.menu, E.day) : []; if (!L.includes(E.slot)) E.slot = L[0] || '';
+      pk.innerHTML = L.length ? `${dHtml(D, E.day)}<p class="gg-live"><i></i>${D.length > 1 ? 'Choisissez le jour et l’heure, l’équipe confirme' : 'Aujourd’hui, l’équipe confirme l’heure'}</p><div class="gg-slots" role="radiogroup" aria-label="Heure de retrait">${L.map((x) => `<button type="button" role="radio" aria-checked="${x === E.slot}" class="${x === E.slot ? 'on' : ''}" data-ggs="${x}">${hmFr(x)}</button>`).join('')}</div>`
         : `<p class="gg-none">${G.menu.open ? 'Plus de retrait possible aujourd’hui. Revenez demain, ou appelez le 09 63 67 76 39.' : 'Commande en ligne fermée pour le moment. Appelez le 09 63 67 76 39.'}</p>`;
     }
     function refresh() {
       const ids = Object.keys(E.q).filter((k) => E.q[k] > 0 && G.by[k]);
       $('.tk-lines', box).innerHTML = ids.length ? ids.map((k) => `<div class="tk-l"><span>${E.q[k]} × ${esc(G.by[k].t)}</span><b>${eur(E.q[k] * G.by[k].p)}</b></div>`).join('') : '<p class="tk-empty">Choisissez vos plats dans la carte.</p>';
       const t = ids.reduce((a, k) => a + E.q[k] * G.by[k].p, 0); $('.tk-total', box).textContent = eur(t);
-      $('.tk-when', box).textContent = E.slot ? `Retrait aujourd’hui à ${hmFr(E.slot)}, à confirmer par la boutique` : '';
+      $('.tk-when', box).textContent = E.slot ? `Retrait ${dTxt(E.day)} à ${hmFr(E.slot)}, à confirmer par la boutique` : '';
       const nm = ($('#as-name', box)?.value || '').trim(), tel = ($('#as-tel', box)?.value || '').replace(/\D/g, '');
       const ok = ids.length && E.slot && nm.length > 1 && tel.length >= 8, btn = $('#as-go', box); btn.disabled = !ok;
-      btn.querySelector('span').textContent = !ids.length ? 'Ajoutez un produit' : !E.slot ? 'Pas de créneau aujourd’hui' : nm.length < 2 ? 'Indiquez votre prénom' : tel.length < 8 ? 'Indiquez votre téléphone' : `Envoyer la commande · ${eur(t)}`;
+      btn.querySelector('span').textContent = !ids.length ? 'Ajoutez un produit' : !E.slot ? 'Pas de créneau disponible' : nm.length < 2 ? 'Indiquez votre prénom' : tel.length < 8 ? 'Indiquez votre téléphone' : `Envoyer la commande · ${eur(t)}`;
     }
     async function send() {
       const btn = $('#as-go', box); if (btn.disabled) return;
@@ -1931,7 +1943,7 @@ const CI = (() => {
       if (!er) { btn.insertAdjacentHTML('beforebegin', '<p class="gg-err" id="gg-as-err" role="alert"></p>'); er = $('#gg-as-err', box); }
       btn.disabled = true; btn.querySelector('span').textContent = 'Envoi…'; er.textContent = '';
       try {
-        const r = await GGBoutique.order(rid, { items: ids.map((k) => ({ id: k, q: E.q[k] })), name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot });
+        const r = await GGBoutique.order(rid, { items: ids.map((k) => ({ id: k, q: E.q[k] })), name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot, day: E.day });
         E.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...E.order, at: Date.now() })); } catch (e) {}
         $('.ticket', box).classList.add('done'); paintOk(r.order || {}); poll();
