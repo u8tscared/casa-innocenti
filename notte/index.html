@@ -1722,7 +1722,7 @@ const CI = (() => {
 .gg-live{display:flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}.gg-live i{width:7px;height:7px;border-radius:50%;background:var(--verde,#2E9E5B);box-shadow:0 0 0 4px color-mix(in srgb,var(--verde,#2E9E5B) 20%,transparent)}
 .gg-slots{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}.gg-slots button{padding:10px 14px;border:1px solid var(--line);font-variant-numeric:tabular-nums}.gg-slots button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .gg-ph{width:100%;height:100%;object-fit:cover;display:block}.gg-ini{display:grid!important;place-items:center;width:100%;height:100%;font:600 42px/1 Georgia,serif;font-style:italic;color:var(--fg);opacity:.55}
-.gg-none{color:var(--mute)}.gg-err{color:var(--rosso,#B3262E);font-size:14px;min-height:1.2em}
+.gg-none{color:var(--mute)}.gg-none a{text-decoration:underline}.gg-paye{margin:6px 0 0;font-size:14px;color:var(--mute)}.as-item.gg-out{opacity:.55}#asporto .gg-wait{display:flex;gap:8px;align-items:center;color:var(--mute)}.gg-err{color:var(--rosso,#B3262E);font-size:14px;min-height:1.2em}
 .gg-st{display:grid;gap:10px;justify-items:start}.gg-st .stamp{transform:rotate(-6deg)}.gg-st .gg-wait{display:flex;gap:10px;align-items:center;color:var(--mute)}
 .gg-dots{display:inline-flex;gap:4px}.gg-dots i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:ggd 1.2s infinite}.gg-dots i:nth-child(2){animation-delay:.15s}.gg-dots i:nth-child(3){animation-delay:.3s}
 @keyframes ggd{0%,80%,100%{opacity:.25}40%{opacity:1}}@media(prefers-reduced-motion:reduce){.gg-dots i{animation:none}}`;
@@ -1771,6 +1771,16 @@ const CI = (() => {
     if ((cart[k] || 0) >= left(k)) { e.stopImmediatePropagation(); e.preventDefault(); const t = $('#toast'); if (t) { t.textContent = left(k) ? `Plus que ${left(k)} en stock` : 'Épuisé pour aujourd’hui'; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); } }
   }, true);
 
+  /* what the client reads for each status of the order (cart checkout and À emporter ticket) */
+  function stH(o, st) {
+    return { demande: ['Grazie !', 'Demande envoyée', 'Casa Innocenti vérifie que tout est là et vous confirme l’heure. Gardez cette page ouverte : elle change toute seule.'],
+      nouvelle: ['Va bene !', `C’est accepté${o.okSlot ? ` : prête à ${hmFr(o.okSlot)}` : ''}`, o.okMsg ? `« ${o.okMsg} »` : 'On prépare votre commande. À tout à l’heure, 30 Grande Rue.'],
+      prep: ['In corso', `En préparation${o.okSlot ? ` · prête à ${hmFr(o.okSlot)}` : ''}`, 'On s’en occupe.'],
+      prete: ['Pronto !', 'Votre commande est prête', 'Elle vous attend en boutique, 30 Grande Rue.'], servie: ['Grazie !', 'Bonne dégustation', 'Merci pour votre commande.'],
+      annulee: ['Mi dispiace', 'Pas possible cette fois', o.why ? `« ${o.why} »` : 'La boutique ne peut pas préparer cette commande. Appelez le 09 63 67 76 39.'] }[st] || ['Grazie !', 'Commande envoyée', ''];
+  }
+  function chime() { try { const A = new (window.AudioContext || window.webkitAudioContext)(); [660, 880].forEach((f, i) => { const o = A.createOscillator(), g = A.createGain(); o.frequency.value = f; g.gain.setValueAtTime(.0001, A.currentTime + i * .18); g.gain.exponentialRampToValueAtTime(.12, A.currentTime + i * .18 + .02); g.gain.exponentialRampToValueAtTime(.0001, A.currentTime + i * .18 + .5); o.connect(g).connect(A.destination); o.start(A.currentTime + i * .18); o.stop(A.currentTime + i * .18 + .55); }); } catch (e) {} }
+
   /* ───────── checkout: today's pickup times, pay in the shop, the shop confirms ───────── */
   function checkout() {
     const co = $('#checkout'); if (!co) return;
@@ -1791,7 +1801,7 @@ const CI = (() => {
     if (steps[3]) {
       steps[3].innerHTML = `<h3>Paiement en boutique</h3><p>Vous réglez au retrait, par carte ou en espèces. La boutique vérifie que tout est là et vous confirme l’heure, ici${''} et par e-mail.</p>
         <p class="gg-err" id="gg-err" role="alert"></p>
-        <div class="co-nav"><button type="button" class="btn ghost" data-back>← Retour</button><button type="button" class="btn" id="gg-send">Envoyer la commande</button></div>`;
+        <div class="co-nav"><button type="button" class="btn ghost" data-back>← Retour</button><button type="button" class="btn" id="gg-send">Envoyer la commande</button></div><span id="co-pay" hidden></span>`; /* the site's summary still writes its old pay button */
       $('#gg-send', steps[3]).addEventListener('click', send);
     }
     const ok = steps[4];
@@ -1813,16 +1823,11 @@ const CI = (() => {
     }
     function paintOk(o) {
       if (!ok) return; const st = o.status || G.order.st;
-      const H = { demande: ['Grazie !', 'Demande envoyée', 'Casa Innocenti vérifie que tout est là et vous confirme l’heure. Gardez cette page ouverte : elle change toute seule.'],
-        nouvelle: ['Va bene !', `C’est accepté${o.okSlot ? ` : prête à ${hmFr(o.okSlot)}` : ''}`, o.okMsg ? `« ${o.okMsg} »` : 'On prépare votre commande. À tout à l’heure, 30 Grande Rue.'],
-        prep: ['In corso', `En préparation${o.okSlot ? ` · prête à ${hmFr(o.okSlot)}` : ''}`, 'On s’en occupe.'],
-        prete: ['Pronto !', 'Votre commande est prête', 'Elle vous attend en boutique, 30 Grande Rue.'], servie: ['Grazie !', 'Bonne dégustation', 'Merci pour votre commande.'],
-        annulee: ['Mi dispiace', 'Pas possible cette fois', o.why ? `« ${o.why} »` : 'La boutique ne peut pas préparer cette commande. Appelez le 09 63 67 76 39.'] }[st] || ['Grazie !', 'Commande envoyée', ''];
+      const H = stH(o, st);
       ok.innerHTML = `<div class="gg-st"><div class="stamp">${H[0]}</div><h3>${esc(H[1])}${G.order.n ? ` <span class="ref">n° ${esc(G.order.n)}</span>` : ''}</h3><p>${esc(H[2])}</p>
         ${st === 'demande' ? '<p class="gg-wait"><span class="gg-dots"><i></i><i></i><i></i></span>En attente de la boutique</p>' : ''}
         <a class="btn ghost" href="${esc(G.order.track)}" target="_blank" rel="noopener">Suivre ma commande →</a><button type="button" class="btn" data-co-close>Continuer mes courses</button></div>`;
     }
-    function chime() { try { const A = new (window.AudioContext || window.webkitAudioContext)(); [660, 880].forEach((f, i) => { const o = A.createOscillator(), g = A.createGain(); o.frequency.value = f; g.gain.setValueAtTime(.0001, A.currentTime + i * .18); g.gain.exponentialRampToValueAtTime(.12, A.currentTime + i * .18 + .02); g.gain.exponentialRampToValueAtTime(.0001, A.currentTime + i * .18 + .5); o.connect(g).connect(A.destination); o.start(A.currentTime + i * .18); o.stop(A.currentTime + i * .18 + .55); }); } catch (e) {} }
     async function poll() {
       clearTimeout(G.pollT); if (!G.order) return;
       try { const o = await GGBoutique.status(rid, G.order.oid, G.order.k); if (o && o.status !== G.order.st) { G.order.st = o.status; chime(); paintOk(o); if (window.gsap) gsap.from('.gg-st .stamp', { scale: 2.4, rotate: -30, opacity: 0, duration: .55, ease: 'back.out(2)' }); }
@@ -1831,10 +1836,81 @@ const CI = (() => {
     }
   }
 
+  /* ───────── À emporter: the ready-to-eat shelves of Growth Gusto (Plats du midi, arancini…), sent like the cart ───────── */
+  const MIDI = /midi|arancin|traiteur|panin|pizza|sandwich|focacc|formule|snack|à emporter|emporter/i;
+  const E = { q: {}, slot: '', order: null, pollT: 0, on: false };
+  const midiItems = () => { const M = G.menu; if (!M) return []; const cat = {}; (M.cats || []).forEach((c) => { cat[c.id] = c.t; });
+    return M.items.filter((it) => it.p > 0 && !it.gaspi && (MIDI.test(it.c || '') || MIDI.test(cat[it.c] || ''))); };
+  function emporter() {
+    const box = $('#asporto'); if (!box || !G.menu) return;
+    if (!E.on) { /* drop the site's demo handlers (fake ticket) once: fresh copies of the menu and the form */
+      E.on = true; ['.as-menu', '.as-form'].forEach((k) => { const a = $(k, box); if (a) a.replaceWith(a.cloneNode(true)); });
+      const hp = $('.as-head p', box); if (hp) hp.textContent = 'Les plats du midi de la Casa : choisissez, indiquez votre heure, la boutique la confirme. Votre commande vous attend au comptoir, vous payez sur place.';
+      const seg = $('.seg', box); if (seg) seg.outerHTML = '<p class="gg-paye">Vous réglez au retrait, par carte ou en espèces.</p>';
+      $('.as-menu', box).addEventListener('click', (e) => { const b = e.target.closest('[data-m]'); if (!b) return; const id = b.closest('.as-item').dataset.id;
+        const mx = left(id); E.q[id] = Math.max(0, Math.min(mx, (E.q[id] || 0) + +b.dataset.m)); paintMenu(); refresh(); });
+      $('.as-picker', box).addEventListener('click', (e) => { const b = e.target.closest('[data-ggs]'); if (!b) return; E.slot = b.dataset.ggs; paintSlots(); refresh(); });
+      ['#as-name', '#as-tel'].forEach((k) => $(k, box)?.addEventListener('input', refresh));
+      $('.as-form', box).addEventListener('submit', (e) => { e.preventDefault(); send(); });
+      box.addEventListener('click', (e) => { if (e.target.closest('#gg-as-new')) { clearTimeout(E.pollT); E.order = null; E.q = {}; $('.ticket', box).classList.remove('done'); paintMenu(); refresh(); } });
+    }
+    paintMenu(); paintSlots(); refresh();
+    function paintMenu() {
+      const L = midiItems(), menu = $('.as-menu', box);
+      Object.keys(E.q).forEach((k) => { if (!G.by[k]) delete E.q[k]; });
+      menu.innerHTML = L.length ? L.map((it) => { const n = E.q[it.id] || 0, out = left(it.id) <= 0;
+        return `<article class="as-item${n ? ' on' : ''}${out ? ' gg-out' : ''}" data-id="${esc(it.id)}"><div class="as-ill">${illus(it.id)}</div>
+        <div class="as-txt"><h3>${esc(it.t)}</h3>${it.b ? `<p>${esc(it.b)}</p>` : ''}${it.w ? `<span class="as-w">${esc(it.w)}</span>` : ''}${out ? '<span class="gg-stk">Épuisé</span>' : ''}</div>
+        <div class="as-buy"><b>${eur(it.p)}</b><div class="stepper"><button type="button" data-m="-1" aria-label="Retirer">−</button><span>${n}</span><button type="button" data-m="1" aria-label="Ajouter"${out ? ' disabled' : ''}>+</button></div></div></article>`; }).join('')
+        : '<p class="gg-none">Les plats du midi ne sont pas encore en ligne. En attendant, faites vos courses dans la <a href="#boutique">boutique</a>, ou appelez le 09 63 67 76 39.</p>';
+    }
+    function paintSlots() {
+      const pk = $('.as-picker', box), L = G.menu.open ? GGBoutique.slots(G.menu) : []; if (!L.includes(E.slot)) E.slot = L[0] || '';
+      pk.innerHTML = L.length ? `<p class="gg-live"><i></i>Aujourd’hui, l’équipe confirme l’heure</p><div class="gg-slots" role="radiogroup" aria-label="Heure de retrait">${L.map((x) => `<button type="button" role="radio" aria-checked="${x === E.slot}" class="${x === E.slot ? 'on' : ''}" data-ggs="${x}">${hmFr(x)}</button>`).join('')}</div>`
+        : `<p class="gg-none">${G.menu.open ? 'Plus de retrait possible aujourd’hui. Revenez demain, ou appelez le 09 63 67 76 39.' : 'Commande en ligne fermée pour le moment. Appelez le 09 63 67 76 39.'}</p>`;
+    }
+    function refresh() {
+      const ids = Object.keys(E.q).filter((k) => E.q[k] > 0 && G.by[k]);
+      $('.tk-lines', box).innerHTML = ids.length ? ids.map((k) => `<div class="tk-l"><span>${E.q[k]} × ${esc(G.by[k].t)}</span><b>${eur(E.q[k] * G.by[k].p)}</b></div>`).join('') : '<p class="tk-empty">Choisissez vos plats dans la carte.</p>';
+      const t = ids.reduce((a, k) => a + E.q[k] * G.by[k].p, 0); $('.tk-total', box).textContent = eur(t);
+      $('.tk-when', box).textContent = E.slot ? `Retrait aujourd’hui à ${hmFr(E.slot)}, à confirmer par la boutique` : '';
+      const nm = ($('#as-name', box)?.value || '').trim(), tel = ($('#as-tel', box)?.value || '').replace(/\D/g, '');
+      const ok = ids.length && E.slot && nm.length > 1 && tel.length >= 8, btn = $('#as-go', box); btn.disabled = !ok;
+      btn.querySelector('span').textContent = !ids.length ? 'Ajoutez un produit' : !E.slot ? 'Pas de créneau aujourd’hui' : nm.length < 2 ? 'Indiquez votre prénom' : tel.length < 8 ? 'Indiquez votre téléphone' : `Envoyer la commande · ${eur(t)}`;
+    }
+    async function send() {
+      const btn = $('#as-go', box); if (btn.disabled) return;
+      const ids = Object.keys(E.q).filter((k) => E.q[k] > 0 && G.by[k]); let er = $('#gg-as-err', box);
+      if (!er) { btn.insertAdjacentHTML('beforebegin', '<p class="gg-err" id="gg-as-err" role="alert"></p>'); er = $('#gg-as-err', box); }
+      btn.disabled = true; btn.querySelector('span').textContent = 'Envoi…'; er.textContent = '';
+      try {
+        const r = await GGBoutique.order(rid, { items: ids.map((k) => ({ id: k, q: E.q[k] })), name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot });
+        E.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
+        try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...E.order, at: Date.now() })); } catch (e) {}
+        $('.ticket', box).classList.add('done'); paintOk(r.order || {}); poll();
+        if (window.gsap) gsap.from('#asporto .tk-done .stamp', { scale: 3, rotate: -40, opacity: 0, duration: .6, ease: 'back.out(2.2)' });
+      } catch (e) { er.textContent = GGBoutique.say(e); refresh(); if (/plat|prix/.test(e.message)) load(); }
+    }
+    function paintOk(o) {
+      const st = o.status || E.order.st, H = stH(o, st);
+      $('.tk-done', box).innerHTML = `<div class="stamp">${H[0]}</div><p class="tk-ref">${esc(H[1])}${E.order.n ? ` · n° <b>${esc(E.order.n)}</b>` : ''}</p><p>${esc(H[2])}</p>
+        ${st === 'demande' ? '<p class="gg-wait"><span class="gg-dots"><i></i><i></i><i></i></span> En attente de la boutique</p>' : ''}
+        <a class="btn ghost" href="${esc(E.order.track)}" target="_blank" rel="noopener">Suivre ma commande →</a><button type="button" class="btn" id="gg-as-new">Nouvelle commande</button>`;
+    }
+    async function poll() {
+      clearTimeout(E.pollT); if (!E.order) return;
+      try { const o = await GGBoutique.status(rid, E.order.oid, E.order.k); if (o && o.status !== E.order.st) { E.order.st = o.status; chime(); paintOk(o); }
+        if (o && ['servie', 'annulee', 'abandonnee'].includes(o.status)) return; } catch (e) {}
+      E.pollT = setTimeout(poll, document.hidden ? 20000 : 6000);
+    }
+    emporter.paint = () => { if (!E.order) { paintMenu(); paintSlots(); refresh(); } };
+  }
+
   async function load() {
     try { G.menu = await GGBoutique.load(rid); } catch (e) { console.warn('Growth Gusto : boutique indisponible', e); return; }
     if (!G.menu.open) { const p = $('.drawer .pay'); if (p) { p.disabled = true; p.textContent = 'Commande en ligne fermée pour le moment'; } }
     apply();
+    try { if (emporter.paint) emporter.paint(); else emporter(); } catch (e) { console.warn('Growth Gusto : à emporter', e); }
   }
   function start() { css(); checkout(); load(); setInterval(() => { if (!document.hidden && !$('.co-open')) load(); }, 60000); }
   const s = document.createElement('script'); s.src = SRC; s.onload = () => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start()); document.head.appendChild(s);
