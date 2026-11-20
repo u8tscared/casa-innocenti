@@ -1916,8 +1916,9 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   /* ───────── À emporter: the ready-to-eat shelves of Growth Gusto (Plats du midi, arancini…), sent like the cart ───────── */
   const MIDI = /midi|arancin|traiteur|panin|pizza|sandwich|focacc|formule|snack|à emporter|emporter/i;
   const E = { q: {}, slot: '', day: '', order: null, pollT: 0, on: false };
-  const midiItems = () => { const M = G.menu; if (!M) return []; const cat = {}; (M.cats || []).forEach((c) => { cat[c.id] = c.t; });
-    return M.items.filter((it) => it.p > 0 && !it.gaspi && (MIDI.test(it.c || '') || MIDI.test(cat[it.c] || ''))); };
+  /* the rayons ticked « À emporter » in Growth Gusto (Boutique › Rayons); a menu published before that setting: guessed by name */
+  const midiItems = () => { const M = G.menu; if (!M) return []; const em = {}; (M.cats || []).forEach((c) => { em[c.id] = typeof c.em === 'boolean' ? c.em : MIDI.test(c.id || '') || MIDI.test(c.t || ''); });
+    return M.items.filter((it) => it.p > 0 && !it.gaspi && em[it.c]); };
   function emporter() {
     const box = $('#asporto'); if (!box || !G.menu) return;
     if (!E.on) { /* drop the site's demo handlers (fake ticket) once: fresh copies of the menu and the form */
