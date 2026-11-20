@@ -867,7 +867,7 @@ footer.ft{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))}
     <div class="qv-ill"></div>
     <div class="qv-txt"><span class="eyebrow qv-cat"></span><h3 class="qv-name"></h3><p class="qv-desc"></p><div class="chips qv-w"></div>
       <div class="qv-row"><span class="qv-price"></span><button type="button" class="btn qv-add" data-add="">Ajouter au panier</button></div>
-      <p class="qv-note">Tranché ou coupé à la commande, emballé dans du papier paraffiné.</p></div>
+      <p class="qv-note">Servi au poids à la commande, emballé dans du papier paraffiné.</p></div>
   </div>
 </div>
 <div class="scrim" data-close></div>
@@ -1751,6 +1751,24 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   const ini = (t) => String(t || '').split(/[\s'’-]+/).filter((w) => w.length > 2 && !/^\d/.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   Object.assign(TINT, { 'Épicerie': '#EFE6DA', Charcuterie: '#F6E3DF', Fromages: '#F7EFD9', Huiles: '#E5EDDC', 'Apéritif et vins': '#F1E0E2', Boissons: '#E3ECEF',
     'Plats du midi': '#F7E8D0', Riz: '#F4EEDC', Arancini: '#F8EBC8', Desserts: '#F4E6D6', Formules: '#EFE6DA', 'Anti-gaspi': '#F6DCDC', Autres: '#EEE9E0' });
+  /* « Décor des photos » (Growth Gusto › Commandes en ligne › Apparence, w/gg-decor.js): with the Thème Noël switch on, or the decor
+     chosen in Growth Gusto, every product photo is cut out of its white background and stands on a wooden table in front of a fir tree
+     with fairy lights. The product sheet and the cart keep the white background. A photo that cannot be cut keeps its plain tile. */
+  let gdT = 0, gdOn = '';
+  const gdWant = () => (document.documentElement.classList.contains('noel') ? 'noel' : (G.menu && G.menu.decor) || '');
+  function gdRun() {
+    const D = window.GGDecor, want = gdWant(), imgs = $$('.prod.gg-hp .prod-img img.gg-ph');
+    if (!want) { if (D && gdOn) D.restore(imgs); gdOn = ''; return; }
+    if (!D) { if (!document.getElementById('gdJs')) { const s = document.createElement('script'); s.id = 'gdJs'; s.src = 'https://app.growthgusto.fr/w/gg-decor.js'; s.onload = gdRun; document.head.appendChild(s); } return; }
+    if (!D.DECORS[want]) return;
+    if (gdOn !== want) { let st = document.getElementById('gdCss'); if (!st) { st = document.createElement('style'); st.id = 'gdCss'; document.head.appendChild(st); }
+      st.textContent = D.css('.prod.gg-hp .prod-img', want) + '.prod.gg-hp .prod-img:has(img.gd-cut){border-radius:0}.prod.gg-hp .prod-img:has(img.gd-cut):after{display:none}.prod.gg-hp .prod-img img.gd-cut{inset:10% 13% 17%!important;width:74%!important;height:73%!important}';
+      gdOn = want; }
+    D.apply(imgs);
+  }
+  const gdSoon = () => { clearTimeout(gdT); gdT = setTimeout(gdRun, 120); };
+  new MutationObserver(gdSoon).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(gdSoon).observe(document.body, { childList: true, subtree: true });
   function apply() {
     const M = G.menu; G.by = {}; const cat = {}; (M.cats || []).forEach((c) => { cat[c.id] = c.t; });
     const L = M.items.filter((it) => it.p > 0);
