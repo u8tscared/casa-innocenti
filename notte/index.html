@@ -1715,7 +1715,9 @@ const CI = (() => {
 
   /* site id → Growth Gusto item */
   const gItem = (k) => G.by[k] || null;
-  const left = (k) => { const it = gItem(k); return it ? (it.left == null ? 99 : it.left) : 0; };
+  /* sold by weight (it.kg): one unit = one slice of it.kg.step grams, the stock (left) is in kilos */
+  const left = (k) => { const it = gItem(k); return it ? (it.left == null ? 99 : it.kg ? Math.floor((+it.left * 1000 + 1e-6) / it.kg.step) : it.left) : 0; };
+  const gT = (g) => (g >= 1000 ? String(Math.round(g / 10) / 100).replace('.', ',') + ' kg' : g + ' g');
 
   function css() {
     const s = document.createElement('style');
@@ -1752,7 +1754,7 @@ const CI = (() => {
     const L = M.items.filter((it) => it.p > 0);
     L.forEach((it) => { G.by[it.id] = it; });
     P.length = 0;
-    L.forEach((it) => P.push({ id: it.id, n: it.t, d: it.gaspi ? `Au lieu de ${eur(it.old || it.p)}${it.dlc ? ' · date courte' : ''}` : (it.b || ''), w: it.w || '', p: it.p,
+    L.forEach((it) => P.push({ id: it.id, n: it.t, d: it.gaspi ? `Au lieu de ${eur(it.old || it.p)}${it.dlc ? ' · date courte' : ''}` : it.kg ? `${eur(it.kg.pkg)} le kilo` : (it.b || ''), w: it.kg ? `les ${gT(it.kg.step)}` : it.w || '', p: it.p,
       c: it.gaspi ? 'Anti-gaspi' : (cat[it.c] || 'Épicerie'), tag: it.gaspi ? `−${it.pct || ''} %` : '', gg: it }));
     (window.PA || []).forEach((x) => { if (!/^ag-/.test(x.id)) return; const c = $(`.agc[data-id="${x.id}"]`); x.stock = 0; if (c) c.hidden = true; });
     $$('[data-box-left]').forEach((el) => { el.textContent = 0; });
@@ -1775,6 +1777,12 @@ const CI = (() => {
     if (it.out || it.left === 0) h = h.replace('class="prod rv', 'class="prod rv gg-out').replace('<span class="prod-price">', '<span class="prod-price"><span class="gg-stk">Épuisé</span> ');
     else if (it.few && it.left != null) h = h.replace(`${p.d} · ${p.w}</p>`, `${p.d} · ${p.w}<span class="gg-stk">${it.left === 1 ? 'Dernier' : 'Plus que ' + it.left}</span></p>`);
     return h;
+  };
+  /* sold by weight: the cart shows the grams (300 g), not a count of slices */
+  const renderCart0 = renderCart;
+  renderCart = function () { // eslint-disable-line no-global-assign
+    renderCart0.apply(this, arguments);
+    $$('#cart-items .qty').forEach((q) => { const b = q.querySelector('[data-add]'), k = b && b.dataset.add, it = k && gItem(k); if (!it || !it.kg) return; const sp = q.querySelector('span'); if (sp) sp.textContent = gT(cart[k] * it.kg.step); });
   };
   /* never more than what is left */
   document.addEventListener('click', (e) => {
