@@ -2063,7 +2063,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   /* the rayons: « Tout », « Le midi » (what is ticked « À emporter » in Growth Gusto, and the menus), then each rayon */
   function paintChips() {
     const f = $('#filters'); if (!f || !G.menu) return;
-    const em = emIds(), used = [...new Set(P.map((p) => p.c))];
+    const em = emIds(), ord = (G.menu.cats || []).map((c) => c.t), used = [...new Set(P.map((p) => p.c))].sort((x, y) => (ord.indexOf(x) + 1 || 99) - (ord.indexOf(y) + 1 || 99)); /* the order of the rayons in Growth Gusto */
     const L = [['Tout', 'Tout'], ...(em.size || (G.menu.menus || []).length ? [[MIDI_F, 'Le midi']] : []), ...used.map((c) => [c, c])];
     if (!L.some((x) => x[0] === ONE.f)) ONE.f = 'Tout';
     f.innerHTML = L.map(([k, t]) => `<button type="button" class="chip${k === ONE.f ? ' on' : ''}${k === MIDI_F ? ' gg-midi' : ''}" data-f="${esc(k)}">${esc(t)}</button>`).join('');
