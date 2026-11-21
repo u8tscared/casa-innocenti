@@ -64,6 +64,19 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-fo-c{display:flex;flex-wrap:wrap;gap:8px}.gg-fo-c .chip{padding:9px 12px;border:1px solid var(--line);background:transparent;cursor:pointer}.gg-fo-c .chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .gg-fo-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}.gg-fo-go{justify-self:stretch}.gg-fo-go[disabled]{opacity:.45}
 .tk-l small{display:block;color:var(--mute);font-size:12px}.gg-fo-x{border:0;background:none;color:var(--mute);font-size:16px;cursor:pointer;padding:0 4px}
+/* one page: the menus and lots as wide cards at the top of the products */
+.gg-lead{color:var(--mute);margin:10px 0 0;max-width:56ch;font-size:16px;line-height:1.45}
+.gg-mn{grid-column:1/-1;border:1px solid var(--line);background:var(--paper,var(--bg));padding:14px 16px}
+.gg-mn-h{display:grid;grid-template-columns:76px 1fr auto;gap:14px;align-items:center;cursor:pointer}
+.gg-mn-ill{width:76px;height:76px;display:block;background:#F7E8D0;border-radius:50%;overflow:hidden}.gg-mn-ill .ill{width:100%;height:100%;display:block}
+.gg-mn-tx{display:grid;gap:3px;min-width:0}.gg-mn-tx small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--rosso,#B3262E)}
+.gg-mn-tx b{font-family:var(--display,Georgia,serif);font-size:21px;font-weight:500;line-height:1.15}.gg-mn-tx em{font-style:normal;color:var(--mute);font-size:14px}.gg-mn-tx i{font-style:normal;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--verde,#2E9E5B)}
+.gg-mn-p{display:grid;justify-items:end;gap:8px}.gg-mn-p b{font-variant-numeric:tabular-nums;font-size:17px}
+.gg-mn-b{display:grid;gap:14px;padding:14px 0 4px;border-top:1px dashed var(--line);margin-top:14px}.gg-mn.open .gg-fo-open{background:transparent;color:var(--fg)}
+.gg-mn-b .chip[disabled]{opacity:.4}.gg-mline .qty button{width:auto;padding:0 10px;font-size:12px}
+#filters .chip.gg-midi{border-color:var(--rosso,#B3262E)}#filters .chip.gg-midi:not(.on){color:var(--rosso,#B3262E)}
+@media (max-width:760px){[data-page="accueil"] #shop{padding-top:14px}#shop .sh .ph{font-size:38px;line-height:1.02;margin-top:8px}#shop .sh .eyebrow{font-size:11px;letter-spacing:.14em}#shop .gg-lead{font-size:15px;margin-top:8px}#shop .sh{margin-bottom:4px;gap:6px}}
+@media (max-width:520px){.gg-mn{padding:12px}.gg-mn-h{grid-template-columns:60px 1fr auto;gap:10px}.gg-mn-ill{width:60px;height:60px}.gg-mn-tx b{font-size:18px}}
 /* phone: the rayons on one line that scrolls, kept in view while scrolling the shop */
 @media (max-width:760px){#filters{position:sticky;top:var(--gg-top,0px);z-index:30;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;gap:8px;padding:10px 0;background:var(--bg);scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
 #filters::-webkit-scrollbar{display:none}#filters>*{flex:none!important;white-space:nowrap;scroll-snap-align:start;padding:10px 14px!important;font-size:15px!important}}`;
@@ -110,7 +123,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   const illus0 = illus;
   illus = function (id) { // eslint-disable-line no-global-assign
     const it = G.by[id]; if (!it) return illus0.apply(this, arguments);
-    return it.ph ? `<img class="ill gg-ph" src="${esc(it.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="ill gg-ini">${esc(ini(it.t))}</span>`;
+    return it.ph ? `<img class="ill gg-ph" src="${esc(it.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : illus0(illKey(it.t, catT()[it.c]));
   };
   /* stock on the cards: « Plus que 2 », « Épuisé » */
   const card0 = card;
@@ -126,6 +139,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   renderCart = function () { // eslint-disable-line no-global-assign
     renderCart0.apply(this, arguments);
     $$('#cart-items .qty').forEach((q) => { const b = q.querySelector('[data-add]'), k = b && b.dataset.add, it = k && gItem(k); if (!it || !it.kg) return; const sp = q.querySelector('span'); if (sp) sp.textContent = gT(cart[k] * it.kg.step); });
+    mCart();
   };
   /* an open sheet (product, cart, checkout) freezes the page behind it */
   const frozen = () => /(^| )(qv|cart|co)-open( |$)/.test(document.documentElement.className);
@@ -205,15 +219,16 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     async function send() {
       const b = $('#gg-send'), er = $('#gg-err'); const fn = ($('#co-fn')?.value || '').trim(), ln = ($('#co-ln')?.value || '').trim(), tel = ($('#co-tel')?.value || '').trim(), mail = ($('#co-mail')?.value || '').trim();
       const items = Object.keys(cart).filter((k) => cart[k] > 0).map((k) => ({ k, it: gItem(k), q: cart[k] }));
+      if (!items.length && !G.F.length) { er.textContent = 'Votre panier est vide.'; return; }
       if (items.some((x) => !x.it)) { er.textContent = 'Un produit du panier n’est pas encore en vente en ligne. Retirez-le, ou appelez la boutique.'; return; }
       if (fn.length < 2 || tel.replace(/\D/g, '').length < 8) { er.textContent = 'Indiquez votre prénom et votre téléphone (étape Coordonnées).'; return; }
       if (!G.slot) { er.textContent = 'Choisissez une heure de retrait.'; return; }
       b.disabled = true; b.textContent = 'Envoi…'; er.textContent = '';
       try {
-        const r = await GGBoutique.order(rid, { items: items.map((x) => ({ id: x.it.id, q: x.q })), name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
+        const r = await GGBoutique.order(rid, { items: [...G.F.map((x) => ({ fo: x.fo, q: 1, pk: x.pk })), ...items.map((x) => ({ id: x.it.id, q: x.q }))], name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
         G.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...G.order, at: Date.now() })); } catch (e) {}
-        Object.keys(cart).forEach((k) => cart[k] = 0); renderCart();
+        Object.keys(cart).forEach((k) => cart[k] = 0); G.F = []; renderCart(); if (G.menu) renderGrid('#grid', 999);
         steps.forEach((s, i) => s.hidden = i !== 4); $$('.co-bar li', co).forEach((l) => l.classList.add('on'));
         paintOk(r.order || {}); poll();
       } catch (e) { b.disabled = false; b.textContent = 'Envoyer la commande'; er.textContent = GGBoutique.say(e); if (/plat|prix/.test(e.message)) load(); }
@@ -273,7 +288,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
         const cnt = sel[gi] || {}, tot = Object.values(cnt).reduce((a, b) => a + b, 0);
         return `<div class="gg-fo-g"><span class="gg-fo-t">${esc(g.t)} · ${tot}/${need}</span>${g.ids.map((id) => `<div class="gg-fo-r"><span>${esc((G.by[id] || {}).t || '')}</span><div class="stepper"><button type="button" data-fog="${gi}" data-foc="${esc(id)}" data-d="-1" aria-label="Retirer"${cnt[id] ? '' : ' disabled'}>−</button><span>${cnt[id] || 0}</span><button type="button" data-fog="${gi}" data-foc="${esc(id)}" data-d="1" aria-label="Ajouter"${tot >= need ? ' disabled' : ''}>+</button></div></div>`).join('')}</div>`; }).join('')}
         <button type="button" class="btn gg-fo-go" data-foadd="${esc(f.id)}"${foPk(f) ? '' : ' disabled'}>${foPk(f) ? `Ajouter · ${eur(f.p)}` : 'Faites vos choix'}</button></div>`; }
-      return `<article class="as-item gg-fo${open ? ' open' : ''}${n ? ' on' : ''}" data-fo="${esc(f.id)}"><div class="as-ill">${f.ph ? `<img class="ill gg-ph" src="${esc(f.ph)}" alt="" loading="lazy">` : `<span class="ill gg-ini">${esc(ini(f.t))}</span>`}</div>
+      return `<article class="as-item gg-fo${open ? ' open' : ''}${n ? ' on' : ''}" data-fo="${esc(f.id)}"><div class="as-ill">${mIll(f)}</div>
         <div class="as-txt"><h3>${esc(f.t)}</h3><p>${esc(f.d || f.steps.map((x) => x.t).filter((t, i, a) => a.indexOf(t) === i).join(' + '))}</p>${n ? `<span class="as-w">${n} au panier</span>` : ''}</div>
         <div class="as-buy"><b>${eur(f.p)}</b><button type="button" class="gg-fo-open" data-foopen="${esc(f.id)}" aria-expanded="${open}" aria-label="Composer ${esc(f.t)}">${open ? '×' : '+'}</button></div>${body}</article>`;
     }
@@ -334,6 +349,148 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     emporter.paint = () => { if (!E.order) { paintMenu(); paintSlots(); refresh(); } };
   }
 
+  /* ───────── one page (Lilou, 2026-11-21): the products are the home page, the rayons on top with « Le midi » first,
+     the menus and lots inside the shop, one cart for everything ───────── */
+  const ONE = { f: 'Tout', fo: null, pk: {} }; G.F = [];
+  const MIDI_F = '__midi';
+  const emIds = () => new Set(midiItems().map((it) => it.id));
+  const catT = () => { const c = {}; ((G.menu && G.menu.cats) || []).forEach((x) => { c[x.id] = x.t; }); return c; };
+  const cartSum = () => Object.keys(cart).filter((k) => cart[k] > 0).reduce((s, k) => { const p = ALL().find((x) => x.id === k); return s + (p ? cart[k] * p.p : 0); }, 0);
+  const cartN = () => Object.keys(cart).reduce((s, k) => s + (cart[k] > 0 ? cart[k] : 0), 0);
+  function onePage() {
+    const home = $('[data-page="accueil"]'), shop = $('#shop'); if (!home || !shop) return;
+    const hero = $('#hero');
+    if (hero) hero.after(shop); else home.insertBefore(shop, home.firstChild);
+    const sec = (el) => el && el.closest('section'); [sec($('#grid-home')), $('.reparti'), hero].forEach((s) => { if (s) s.hidden = true; });
+    const tg = $('#taglio'); if (tg) home.appendChild(tg);
+    const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 30 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique. Le midi : menus, plats et douceurs à emporter.</p>`; }
+    /* the old pages « Boutique » and « À emporter » are now this page: their links open it on the right rayon */
+    const goShop = (f) => { if (f) { ONE.f = f; if (G.menu) { paintChips(); renderGrid('#grid', 999); } }
+      let a = $('#gg-go'); if (!a) { a = document.createElement('a'); a.id = 'gg-go'; a.href = '#shop'; a.hidden = true; document.body.appendChild(a); } a.click(); };
+    document.addEventListener('click', (e) => { const a = e.target.closest('a[href="#boutique"], a[href="#emporter"]'); if (!a) return;
+      e.preventDefault(); e.stopImmediatePropagation(); goShop(a.getAttribute('href') === '#emporter' ? MIDI_F : 'Tout'); }, true);
+    const old = (ms) => { if (/^#(boutique|emporter)$/.test(location.hash)) { const f = location.hash === '#emporter' ? MIDI_F : 'Tout'; setTimeout(() => goShop(f), ms); } };
+    old(50); addEventListener('hashchange', () => old(1300)); /* after the site's page change */
+  }
+  /* the rayons: « Tout », « Le midi » (what is ticked « À emporter » in Growth Gusto, and the menus), then each rayon */
+  function paintChips() {
+    const f = $('#filters'); if (!f || !G.menu) return;
+    const em = emIds(), used = [...new Set(P.map((p) => p.c))];
+    const L = [['Tout', 'Tout'], ...(em.size || (G.menu.menus || []).length ? [[MIDI_F, 'Le midi']] : []), ...used.map((c) => [c, c])];
+    if (!L.some((x) => x[0] === ONE.f)) ONE.f = 'Tout';
+    f.innerHTML = L.map(([k, t]) => `<button type="button" class="chip${k === ONE.f ? ' on' : ''}${k === MIDI_F ? ' gg-midi' : ''}" data-f="${esc(k)}">${esc(t)}</button>`).join('');
+  }
+  filters = function (sel, gridSel, n) { // eslint-disable-line no-global-assign
+    const f = $(sel); if (!f || sel !== '#filters' || !G.menu) return;
+    paintChips();
+    f.addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; ONE.f = b.dataset.f; ONE.fo = null; ONE.pk = {};
+      $$('.chip', f).forEach((x) => x.classList.toggle('on', x === b)); b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      const g = $(gridSel); g.classList.add('swap'); setTimeout(() => { renderGrid(gridSel, n); g.classList.remove('swap'); }, 200); });
+  };
+  const rg0 = renderGrid;
+  renderGrid = function (sel, n) { // eslint-disable-line no-global-assign
+    if (sel !== '#grid' || !G.menu) return rg0.apply(this, arguments);
+    const g = $(sel); if (!g) return; const f = ONE.f, cat = catT(), em = emIds();
+    const list = f === MIDI_F ? P.filter((p) => em.has(p.id)) : f === 'Tout' ? P : P.filter((p) => p.c === f);
+    const F = (G.menu.menus || []).filter((m) => f === 'Tout' || f === MIDI_F || cat[m.c] === f);
+    g.innerHTML = F.map(mnHtml).join('') + list.map(card).join('') || '<p class="gg-none">Rien dans ce rayon pour le moment.</p>';
+    observe($$('.rv', g));
+  };
+  /* a menu or a lot in the shop: « Composer » opens its choices on the card; a lot of 5 = one counter per flavour */
+  const mGroups = (f) => { const g = []; f.steps.forEach((st, i) => { const k = st.ids.join(','), last = g[g.length - 1]; if (last && last.k === k) last.idx.push(i); else g.push({ k, t: st.t, ids: st.ids, idx: [i] }); }); return g; };
+  function mPk(f) { const pk = [], g = mGroups(f); for (let gi = 0; gi < g.length; gi++) { const v = ONE.pk[gi];
+    if (g[gi].idx.length === 1) { if (!v) return null; pk.push(v); } else { const L = []; Object.keys(v || {}).forEach((id) => { for (let i = 0; i < v[id]; i++) L.push(id); }); if (L.length !== g[gi].idx.length) return null; pk.push(...L); } }
+    return pk; }
+  const mIll = (f) => (f.ph ? `<img class="ill gg-ph" src="${esc(f.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : illus0(illKey(f.lot && f.steps[0] ? (G.by[f.steps[0].ids[0]] || {}).t || f.t : f.t, catT()[f.c] || '') || 'focaccia'));
+  function mnHtml(f) {
+    const open = ONE.fo === f.id, n = G.F.filter((x) => x.fo === f.id).length, pk = open && mPk(f);
+    const what = f.d || mGroups(f).map((g) => (g.idx.length > 1 ? g.idx.length + ' × ' : '') + g.t).join(' + ');
+    let body = '';
+    if (open) body = `<div class="gg-mn-b">${mGroups(f).map((g, gi) => { const need = g.idx.length;
+      if (need === 1) return `<div><span class="gg-fo-t">${esc(g.t)}</span><div class="gg-fo-c">${g.ids.map((id) => `<button type="button" class="chip${ONE.pk[gi] === id ? ' on' : ''}" data-mg="${gi}" data-mi="${esc(id)}"${left(id) > 0 ? '' : ' disabled'}>${esc((G.by[id] || {}).t || '')}</button>`).join('')}</div></div>`;
+      const cnt = ONE.pk[gi] || {}, tot = Object.values(cnt).reduce((a, b) => a + b, 0);
+      return `<div><span class="gg-fo-t">${esc(g.t)} · ${tot} sur ${need}</span>${g.ids.map((id) => `<div class="gg-fo-r"><span>${esc((G.by[id] || {}).t || '')}</span><div class="stepper"><button type="button" data-mg="${gi}" data-mc="${esc(id)}" data-d="-1" aria-label="Retirer"${cnt[id] ? '' : ' disabled'}>−</button><span>${cnt[id] || 0}</span><button type="button" data-mg="${gi}" data-mc="${esc(id)}" data-d="1" aria-label="Ajouter"${tot >= need ? ' disabled' : ''}>+</button></div></div>`).join('')}</div>`; }).join('')}
+      <button type="button" class="btn gg-fo-go" data-madd="${esc(f.id)}"${pk ? '' : ' disabled'}>${pk ? `Ajouter au panier · ${eur(f.p)}` : 'Faites vos choix'}</button></div>`;
+    return `<article class="gg-mn${open ? ' open' : ''}" data-mn="${esc(f.id)}"><div class="gg-mn-h" data-mopen="${esc(f.id)}"><span class="gg-mn-ill">${mIll(f)}</span>
+      <span class="gg-mn-tx"><small>${f.lot ? 'L’offre' : 'Menu du midi'}</small><b>${esc(f.t)}</b><em>${esc(what)}</em>${n ? `<i>${n} au panier</i>` : ''}</span>
+      <span class="gg-mn-p"><b>${eur(f.p)}</b><button type="button" class="gg-fo-open" aria-expanded="${open}" aria-label="Composer ${esc(f.t)}">${open ? '×' : '+'}</button></span></div>${body}</article>`;
+  }
+  const mRepaint = (id) => { const f = ((G.menu && G.menu.menus) || []).find((x) => x.id === id), el = $(`.gg-mn[data-mn="${CSS.escape(id)}"]`); if (f && el) el.outerHTML = mnHtml(f); };
+  document.addEventListener('click', (e) => {
+    const t = e.target, F = (G.menu && G.menu.menus) || [];
+    const x = t.closest('[data-ggfx]'); if (x) { const r = G.F.splice(+x.dataset.ggfx, 1)[0]; renderCart(); if (r) mRepaint(r.fo); return; }
+    const op = t.closest('[data-mopen]'); if (op) { const was = ONE.fo; ONE.fo = was === op.dataset.mopen ? null : op.dataset.mopen; ONE.pk = {}; if (was && was !== ONE.fo) mRepaint(was); mRepaint(op.dataset.mopen); return; }
+    const f = F.find((y) => y.id === ONE.fo); if (!f || !t.closest('.gg-mn-b')) return;
+    const c = t.closest('[data-mi]'); if (c) { ONE.pk[+c.dataset.mg] = c.dataset.mi; mRepaint(f.id); return; }
+    const k = t.closest('[data-mc]'); if (k) { const gi = +k.dataset.mg, m = (ONE.pk[gi] = ONE.pk[gi] || {}); m[k.dataset.mc] = Math.max(0, (m[k.dataset.mc] || 0) + +k.dataset.d); mRepaint(f.id); return; }
+    const a = t.closest('[data-madd]'); if (a) { const pk = mPk(f); if (!pk) return;
+      const by = {}; pk.forEach((id) => { const nm = (G.by[id] || {}).t || ''; by[nm] = (by[nm] || 0) + 1; });
+      G.F.push({ fo: f.id, pk, t: f.t, p: f.p, what: Object.keys(by).map((nm) => nm + (by[nm] > 1 ? ' ×' + by[nm] : '')).join(', ') });
+      ONE.fo = null; ONE.pk = {}; mRepaint(f.id); renderCart(); if (typeof fly === 'function') try { fly(a); } catch (er) {} if (typeof toast === 'function') toast(f.t); }
+  });
+  /* the cart drawer and the checkout summary also hold the menus */
+  function mCart() {
+    if (!G.menu) return; const F = G.menu.menus || []; G.F = G.F.filter((x) => F.some((f) => f.id === x.fo));
+    const body = $('#cart-items'); if (!body) return; const tm = G.F.reduce((s, x) => s + x.p, 0), t = cartSum() + tm;
+    if (G.F.length) { if (!cartN()) body.innerHTML = '';
+      body.insertAdjacentHTML('afterbegin', G.F.map((x, i) => `<div class="line gg-mline"><span class="line-ill" style="--tint:#F7E8D0">${mIll(F.find((f) => f.id === x.fo) || x)}</span><div><strong>${esc(x.t)}</strong><small>${esc(x.what)}</small><div class="qty"><button type="button" data-ggfx="${i}" aria-label="Retirer ${esc(x.t)}">Retirer</button></div></div><b>${eur(x.p)}</b></div>`).join('')); }
+    $('#cart-total') && ($('#cart-total').textContent = eur(t));
+    if (G.F.length) { $$('[data-count]').forEach((el) => { el.textContent = cartN() + G.F.length; }); const fr = $('#cart-free'); if (fr) fr.innerHTML = 'Retrait gratuit en boutique · <b>prêt en 2 h</b>, 30 Grande Rue'; const br = $('#cart-bar'); if (br) br.style.setProperty('--pct', '100%'); }
+  }
+  /* « Commander » with only menus in the cart: the site's checkout waits for a product, open it here */
+  document.addEventListener('click', (e) => { if (!e.target.closest('.drawer .pay') || cartN() || !G.F.length) return; e.stopImmediatePropagation();
+    const co = $('#checkout'); if (!co) return; openCart(false); document.documentElement.classList.add('co-open');
+    $$('.co-step', co).forEach((s, i) => { s.hidden = i !== 0; }); $$('.co-bar li', co).forEach((l, i) => l.classList.toggle('on', i === 0)); coSum(); }, true);
+  function coSum() {
+    const co = $('#checkout'), lines = co && $('.co-lines', co); if (!lines || !G.menu) return; const F = G.menu.menus || [];
+    if (G.F.length && !$('.gg-mline', lines)) lines.insertAdjacentHTML('afterbegin', G.F.map((x) => `<div class="co-l gg-mline"><span class="line-ill" style="--tint:#F7E8D0">${mIll(F.find((f) => f.id === x.fo) || x)}</span><span>${esc(x.t)} · ${esc(x.what)}</span><b>${eur(x.p)}</b></div>`).join(''));
+    const tt = $('.co-tot', co); if (tt) { const v = eur(cartSum() + G.F.reduce((s, x) => s + x.p, 0)); if (tt.textContent !== v) tt.textContent = v; }
+  }
+  (() => { const co = $('#checkout'), lines = co && $('.co-lines', co); if (!lines) return; new MutationObserver(coSum).observe(lines, { childList: true }); co.addEventListener('click', () => setTimeout(coSum, 0)); })();
+
+  /* ───────── illustrations: a product or a menu without a photo gets the site's drawing of what it is ───────── */
+  const ILLK = [[/cannol/, 'cannolo'], [/arancin/, 'arancino'], [/focacc/, 'focaccia'], [/pizza/, 'pizza'], [/panin|sandwich|piadin/, 'panino'], [/pesto|sugo|sauce|pomarola/, 'pesto'],
+    [/tortell|raviol|agnolott|cappellet/, 'tortellini'], [/p[aâ]te|pasta|tagliat|spaghet|penne|linguin|gnocch|fusill|rigaton|orecchiet|paccher|lasagn/, 'tagliatelle'],
+    [/burrata|mozza|ricotta|stracciat|mascarpone/, 'burrata'], [/parmig|grana|reggian/, 'parmigiano'], [/pecorino|gorgonz|fromage|taleggio|provolon|fontina|scamorza|asiago/, 'pecorino'],
+    [/jambon|prosciut|speck|coppa|bresaola|mortadel|guancial|pancett/, 'prosciutto'], [/salam|saucis|nduja|finocchion/, 'salame'],
+    [/tiramis/, 'tiramisu'], [/panettone|pandoro|colomba/, 'panettone'], [/biscot|biscuit|cantucc|amaretti|savoiard|baci/, 'biscotti'],
+    [/espresso|expresso|caf[eé]|capsule|cappucc/, 'espresso'], [/huile|olio/, 'olio'], [/oliv/, 'oliva'], [/tomate|pomodor|passata|pelati/, 'pomodoro'], [/basilic/, 'basilico'],
+    [/limoncello|citron|limon/, 'limone'], [/vin |vino|prosecco|chianti|primitivo|lambrusco|grappa|amaro|spritz|aperol|biere|bière|birra/, 'vino'],
+    [/soda|coca|aranciata|cedrata|lemonsoda|chinotto|san pell|eau|acqua|th[eé] |jus|limonade|boisson/, 'bottiglia'], [/riz|risott|arborio|carnaroli/, 'risotto']];
+  const ILLR = [[/charcut/, 'salame'], [/fromag/, 'pecorino'], [/p[aâ]tes|sauce/, 'tagliatelle'], [/huile/, 'olio'], [/vin|ap[eé]ritif/, 'vino'], [/boisson/, 'bottiglia'], [/caf/, 'espresso'],
+    [/riz/, 'risotto'], [/arancin/, 'arancino'], [/dessert|douceur|biscuit/, 'cannolo'], [/panetton|no[eë]l/, 'panettone'], [/midi|formule/, 'focaccia'], [/[eé]picerie/, 'pomodoro']];
+  function illKey(name, ray) { const n = String(name || '').toLowerCase() + ' ', r = String(ray || '').toLowerCase();
+    const k = (ILLK.find(([re]) => re.test(n)) || ILLR.find(([re]) => re.test(r)) || [0, 'board'])[1]; return ILLUS[k] ? k : 'board'; }
+  (function moreIllus() {
+    if (typeof ILLUS !== 'object') return; const K = typeof INK === 'string' ? INK : '#2B1D16', S = typeof sh === 'function' ? sh : () => '';
+    if (!ILLUS.cannolo) ILLUS.cannolo = `${S(120, 196, 86)}
+ <g transform="rotate(-18 120 130)"><rect x="46" y="104" width="148" height="52" rx="26" fill="#C98A3E"/><rect x="50" y="108" width="140" height="44" rx="22" fill="#E2A957"/>
+ <g stroke="#B97830" stroke-width="3" opacity=".7">${[70, 92, 114, 136, 158].map((x) => `<path d="M${x} 110c6 12 6 28 0 40"/>`).join('')}</g>
+ <ellipse cx="46" cy="130" rx="16" ry="27" fill="#F6EFDF"/><ellipse cx="194" cy="130" rx="16" ry="27" fill="#F6EFDF"/>
+ <g fill="#7FA23C">${[[38, 122], [44, 138], [52, 126], [200, 120], [188, 138], [202, 134]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.2"/>`).join('')}</g></g>
+ <g fill="#fff" opacity=".85"><circle cx="96" cy="70" r="2"/><circle cx="132" cy="62" r="1.6"/><circle cx="160" cy="80" r="2"/></g>`;
+    if (!ILLUS.arancino) ILLUS.arancino = `${S(120, 204, 70)}
+ <path d="M120 40c34 34 70 74 70 116 0 30-30 48-70 48s-70-18-70-48c0-42 36-82 70-116z" fill="#C7782E"/>
+ <path d="M120 50c30 32 62 68 62 106 0 26-26 40-62 40s-62-14-62-40c0-38 32-74 62-106z" fill="#E09A45"/>
+ <g fill="#B86A26" opacity=".75">${[[100, 120], [132, 104], [144, 146], [96, 164], [124, 176], [118, 136], [156, 172], [84, 144]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3"/>`).join('')}</g>
+ <path d="M96 92c8-10 16-18 24-26" stroke="#F4C27A" stroke-width="6" stroke-linecap="round" opacity=".7"/>`;
+    if (!ILLUS.bottiglia) ILLUS.bottiglia = `${S(120, 212, 46)}
+ <path d="M104 26h32v34c0 10 22 22 22 50v92c0 6-4 10-10 10H92c-6 0-10-4-10-10v-92c0-28 22-40 22-50z" fill="#9FC7D9" opacity=".9"/>
+ <rect x="102" y="16" width="36" height="16" rx="3" fill="#C8202F"/>
+ <path d="M98 110c0-16 8-26 14-32v128H98z" fill="#fff" opacity=".35"/>
+ <rect x="82" y="124" width="76" height="52" fill="#F7F1E3"/><path d="M82 124h76M82 176h76" stroke="#C8202F" stroke-width="3"/>
+ <text x="120" y="156" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="15" fill="${K}">Bibita</text>`;
+    if (!ILLUS.risotto) ILLUS.risotto = `${S(120, 204, 86)}
+ <path d="M30 120h180c0 50-40 82-90 82s-90-32-90-82z" fill="#F3EEE4"/><path d="M30 120h180" stroke="#D8CFBF" stroke-width="4"/>
+ <ellipse cx="120" cy="120" rx="80" ry="18" fill="#EED89A"/>
+ <g fill="#F8EDC6">${[[84, 116], [104, 122], [128, 114], [150, 122], [170, 116], [96, 112], [140, 126]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="2.6"/>`).join('')}</g>
+ <g fill="#4D8A3A"><path d="M114 108c6-8 16-8 20 0-6 6-14 6-20 0z"/></g>`;
+    if (!ILLUS.biscotti) ILLUS.biscotti = `${S(120, 204, 84)}
+ ${[[48, 128, -14], [96, 118, 6], [146, 130, -6]].map(([x, y, r]) => `<g transform="rotate(${r} ${x + 24} ${y + 30})"><path d="M${x} ${y + 60}c0-40 12-60 24-60s24 20 24 60z" fill="#D9A55A"/><path d="M${x + 4} ${y + 58}c0-36 10-54 20-54s20 18 20 54z" fill="#E9C07A"/><g fill="#B98547">${[[10, 30], [26, 22], [18, 44], [32, 40]].map(([a, b]) => `<ellipse cx="${x + a}" cy="${y + b}" rx="4" ry="3"/>`).join('')}</g></g>`).join('')}`;
+  })();
+  if (typeof TINT === 'object') Object.assign(TINT, { Charcuterie: '#F6E3DF', Fromages: '#F7EFD9', 'Pâtes et sauces': '#F8EBC8', 'Épicerie': '#E5EDDC', Huiles: '#E5EDDC', 'Apéritif et vins': '#F1E0E2',
+    'Biscuits et douceurs': '#F4E6D6', Desserts: '#F4E6D6', 'Panettoni et Noël': '#F4E6D6', 'Plats du midi': '#F7E8D0', Arancini: '#F7E8D0', Formules: '#F7E8D0', 'Café à emporter': '#EFE6DA', Boissons: '#E3ECEF', Riz: '#F2ECDD', Autres: '#EFE6DA' });
+
   async function load() {
     try { G.menu = await GGBoutique.load(rid); } catch (e) { console.warn('Growth Gusto : boutique indisponible', e); return; }
     if (!G.menu.open) { const p = $('.drawer .pay'); if (p) { p.disabled = true; p.textContent = 'Commande en ligne fermée pour le moment'; } }
@@ -355,6 +512,6 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     /* the rayons stay under the header when it is sticky */
     const hd = $('header'); if (hd && /sticky|fixed/.test(getComputedStyle(hd).position)) document.documentElement.style.setProperty('--gg-top', hd.offsetHeight + 'px');
   }
-  function start() { css(); relabel(); checkout(); load(); setInterval(() => { if (!document.hidden && !$('.co-open')) load(); }, 60000); }
+  function start() { css(); onePage(); relabel(); checkout(); load(); setInterval(() => { if (!document.hidden && !$('.co-open')) load(); }, 60000); }
   const s = document.createElement('script'); s.src = SRC; s.onload = () => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start()); document.head.appendChild(s);
 })();
