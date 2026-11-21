@@ -1864,10 +1864,13 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     const paintSlots = () => { const D = dset(G.menu); if (!D.includes(G.day)) G.day = D[0] || ''; const L = G.day ? GGBoutique.slots(G.menu, G.day) : []; if (!L.includes(G.slot)) G.slot = L[0] || '';
       pk.innerHTML = L.length ? `${dHtml(D, G.day)}<p class="gg-live"><i></i>${D.length > 1 ? 'Choisissez le jour et l’heure, l’équipe confirme' : 'Aujourd’hui, l’équipe confirme l’heure'}</p><div class="gg-slots" role="radiogroup" aria-label="Heure de retrait">${L.map((s) => `<button type="button" role="radio" aria-checked="${s === G.slot}" class="${s === G.slot ? 'on' : ''}" data-ggs="${s}">${hmFr(s)}</button>`).join('')}</div>`
         : '<p class="gg-none">Plus de retrait possible aujourd’hui. Revenez demain, ou appelez le 09 63 67 76 39.</p>';
+      pk.insertAdjacentHTML('beforeend', '<button type="button" class="pk-slot" data-h="0" hidden tabindex="-1" aria-hidden="true"></button>'); /* the site's own step check waits for its demo picker: this stand-in tells it a time is chosen */
       if (nav1) nav1.disabled = !G.slot; whenTxt(); };
     const whenTxt = () => { const w = $('.co-when', co); if (w) w.textContent = G.slot ? `Retrait ${dTxt(G.day)} à ${hmFr(G.slot)}, à confirmer par la boutique` : ''; };
     pk.addEventListener('click', (e) => { const d = e.target.closest('[data-ggd]'); if (d) { e.stopPropagation(); G.day = d.dataset.ggd; G.slot = ''; paintSlots(); return; } const b = e.target.closest('[data-ggs]'); if (!b) return; e.stopPropagation(); G.slot = b.dataset.ggs; paintSlots(); }, true);
     $('.drawer .pay')?.addEventListener('click', () => setTimeout(() => { paintSlots(); const p = $('#co-pay'); }, 0));
+    co.addEventListener('click', (e) => { if (e.target.closest('[data-next]') && steps[1] && !steps[1].hidden && G.slot) $('.pk-slot', pk)?.click(); }, true); /* « Continuer » after the time: let the site move on */
+    co.addEventListener('click', () => whenTxt()); /* the site rewrites the pickup line on each step: keep the real day and time */
     /* step 3: send, no card */
     if (steps[3]) {
       steps[3].innerHTML = `<h3>Paiement en boutique</h3><p>Vous réglez au retrait, par carte ou en espèces. La boutique vérifie que tout est là et vous confirme l’heure, ici${''} et par e-mail.</p>
