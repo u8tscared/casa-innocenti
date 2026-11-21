@@ -94,12 +94,13 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   const gdWant = () => (document.documentElement.classList.contains('noel') ? 'noel' : (G.menu && G.menu.decor) || '');
   function gdRun() {
     const D = window.GGDecor, want = gdWant(), imgs = $$('.prod.gg-hp .prod-img img.gg-ph');
-    if (!want) { if (D && gdOn) D.restore(imgs); gdOn = ''; return; }
+    if (!want) { if (D && gdOn) D.restore(imgs); gdOn = ''; const st = document.getElementById('gdCss'); if (st) st.textContent = ''; return; }
     if (!D) { if (!document.getElementById('gdJs')) { const s = document.createElement('script'); s.id = 'gdJs'; s.src = 'https://app.growthgusto.fr/w/gg-decor.js'; s.onload = gdRun; document.head.appendChild(s); } return; }
-    if (!D.DECORS[want]) return;
-    if (gdOn !== want) { let st = document.getElementById('gdCss'); if (!st) { st = document.createElement('style'); st.id = 'gdCss'; document.head.appendChild(st); }
-      st.textContent = D.css('.prod.gg-hp .prod-img', want) + '.prod.gg-hp .prod-img:has(img.gd-cut){border-radius:0}.prod.gg-hp .prod-img:has(img.gd-cut):after{display:none}.prod.gg-hp .prod-img img.gd-cut{inset:10% 13% 17%!important;width:74%!important;height:73%!important}';
-      gdOn = want; }
+    const img = (G.menu && G.menu.decorImg) || '', key = want + (want === 'perso' ? img : '');
+    if (!D.DECORS[want] && !(want === 'perso' && img)) return;
+    if (gdOn !== key) { let st = document.getElementById('gdCss'); if (!st) { st = document.createElement('style'); st.id = 'gdCss'; document.head.appendChild(st); }
+      st.textContent = D.css('.prod .prod-img', want, img) + '.prod .prod-img:has(> svg.ill){border-radius:0}' + '.prod.gg-hp .prod-img:has(img.gd-cut){border-radius:0}.prod.gg-hp .prod-img:has(img.gd-cut):after{display:none}.prod.gg-hp .prod-img img.gd-cut{inset:10% 13% 17%!important;width:74%!important;height:73%!important}';
+      gdOn = key; }
     D.apply(imgs);
   }
   const gdSoon = () => { clearTimeout(gdT); gdT = setTimeout(gdRun, 120); };
