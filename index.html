@@ -123,6 +123,8 @@ h1,h2,h3{text-wrap:balance}
 .intro .wl{overflow:hidden;display:block;padding-bottom:.08em}
 .intro .rule{display:flex;width:min(320px,60vw);height:3px;margin:0 auto}.intro .rule i{flex:1;background:#1F7A46;transform:scaleX(0);transform-origin:left}.intro .rule i:nth-child(2){background:#F3F0E8}.intro .rule i:nth-child(3){background:#C8202F}
 .intro .sub{font-size:12px;letter-spacing:.4em;text-transform:uppercase;opacity:.8}
+.intro .cc{display:grid;gap:4px;justify-items:center;margin-top:10px;background:#F3F0E8;color:#0E3B2C;border-radius:999px;padding:14px 30px 13px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.intro .cc b{font-family:var(--display);font-weight:500;font-size:clamp(22px,3.2vw,34px);line-height:1.05}.intro .cc small{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#1F7A46}
+@media (max-width:520px){.intro .cc{border-radius:22px;padding:14px 20px;max-width:88vw}}
 .top{background:#0E3B2C;color:#F3F0E8;font-size:12.5px;letter-spacing:.1em;text-align:center;padding:9px 16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:41;background:var(--bg)}
@@ -1445,14 +1447,15 @@ const CI = (() => {
   const tl = gsap.timeline({defaults:{ease:'power4.out'}});
   const intro = document.createElement('div'); intro.className = 'intro'; intro.setAttribute('aria-hidden', 'true');
   const split = t => [...t].map(c => `<span class="ch">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
-  intro.innerHTML = `<div class="col"></div><div class="col"></div><div class="col"></div><div class="mark"><span class="sub">Épicerie fine italienne</span><span class="word"><span class="wl">${split('Casa')} <em>${split('Innocenti')}</em></span></span><span class="rule"><i></i><i></i><i></i></span><span class="sub">Saint-Priest</span></div>`;
+  intro.innerHTML = `<div class="col"></div><div class="col"></div><div class="col"></div><div class="mark"><span class="sub">Épicerie fine italienne</span><span class="word"><span class="wl">${split('Casa')} <em>${split('Innocenti')}</em></span></span><span class="rule"><i></i><i></i><i></i></span><span class="sub">Saint-Priest</span><span class="cc"><b>Désormais en Click &amp; Collect</b><small>Commandez en ligne, retirez en boutique</small></span></div>`;
   document.body.appendChild(intro);
   const out = gsap.timeline({paused:true}).to(intro.querySelector('.mark'), {yPercent:-30, opacity:0, duration:.45, ease:'power3.in'})
     .to(intro.querySelectorAll('.col'), {yPercent:-100, duration:.75, stagger:.07, ease:'expo.inOut'}, '-=.2').add(() => intro.remove());
   tl.from(intro.querySelectorAll('.ch'), {yPercent:110, rotate:6, duration:.6, stagger:.025})
     .from(intro.querySelectorAll('.sub'), {opacity:0, y:8, duration:.4, stagger:.1}, '<.15')
     .to(intro.querySelectorAll('.rule i'), {scaleX:1, duration:.3, stagger:.07, ease:'power2.inOut'}, '-=.35')
-    .add(() => out.play(), '+=.05');
+    .from(intro.querySelector('.cc'), {opacity:0, y:16, scale:.94, duration:.7, ease:'back.out(1.6)'}, '-=.05')
+    .add(() => out.play(), '+=3.4');
   intro.addEventListener('click', () => { tl.progress(1); out.play(); });
   const seen = false;
   tl.from('.hang', {y:-460, duration:.9, stagger:.05, ease:'power3.out'}, '+=.3')
@@ -1752,6 +1755,10 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-fo-c{display:flex;flex-wrap:wrap;gap:8px}.gg-fo-c .chip{padding:9px 12px;border:1px solid var(--line);background:transparent;cursor:pointer}.gg-fo-c .chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .gg-fo-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}.gg-fo-go{justify-self:stretch}.gg-fo-go[disabled]{opacity:.45}
 .tk-l small{display:block;color:var(--mute);font-size:12px}.gg-fo-x{border:0;background:none;color:var(--mute);font-size:16px;cursor:pointer;padding:0 4px}
+.gg-cc{display:grid;gap:16px;justify-items:start;max-width:560px;margin-top:22px;padding:18px 20px;border:1px solid var(--line);background:var(--paper,#fff);border-left:4px solid var(--verde,#2E9E5B)}
+.gg-cc p{margin:0;font-size:16px;line-height:1.45;color:var(--fg)}.gg-cc p b{color:var(--verde,#2E9E5B)}
+.gg-cc .gg-cc-b{font-size:16px;padding:16px 26px}
+@media (max-width:520px){.gg-cc{padding:14px 16px}.gg-cc .gg-cc-b{width:100%;justify-content:center}}
 /* one page: the menus and lots as wide cards at the top of the products */
 .gg-lead{color:var(--mute);margin:10px 0 0;max-width:56ch;font-size:16px;line-height:1.45}
 .gg-mn{grid-column:1/-1;border:1px solid var(--line);background:var(--paper,var(--bg));padding:14px 16px}
@@ -2048,9 +2055,10 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   const cartN = () => Object.keys(cart).reduce((s, k) => s + (cart[k] > 0 ? cart[k] : 0), 0);
   function onePage() {
     const home = $('[data-page="accueil"]'), shop = $('#shop'); if (!home || !shop) return;
-    const hero = $('#hero');
-    if (hero) hero.after(shop); else home.insertBefore(shop, home.firstChild);
-    const sec = (el) => el && el.closest('section'); [sec($('#grid-home')), $('.reparti'), hero].forEach((s) => { if (s) s.hidden = true; });
+    /* the home stays the welcome (name, hours, reviews): one big Click & Collect button opens the shop page, the products are not on the home */
+    const sec = (el) => el && el.closest('section'); [sec($('#grid-home')), $('.reparti')].forEach((s) => { if (s) s.hidden = true; });
+    $$('.hero-txt .btns', home).forEach((b) => { const d = document.createElement('div'); d.className = 'gg-cc';
+      d.innerHTML = `<p><b>Nouveau : le Click &amp; Collect.</b> Choisissez vos produits et votre menu du midi en ligne, on prépare votre panier, vous le récupérez en boutique sans attendre.</p><a class="btn gg-cc-b" href="#boutique">Commander en Click &amp; Collect <span>→</span></a>`; b.replaceWith(d); });
     const tg = $('#taglio'); if (tg) home.appendChild(tg);
     const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 30 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique. Le midi : menus, plats et douceurs à emporter.</p>`; }
     /* the old pages « Boutique » and « À emporter » are now this page: their links open it on the right rayon */
