@@ -1749,7 +1749,18 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-s4 .prod.gg-hp{background:var(--card);padding:10px;border:1px solid var(--line)}.gg-s4 .prod.gg-hp .prod-img{background:#fff;border:1px solid var(--line);border-radius:0}
 .gg-s4 .prod.gg-hp .prod-img .gg-ph{inset:7%;width:86%;height:86%;object-fit:contain}.gg-s4 .prod.gg-hp .prod-meta{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
 .gg-s1 .prod.gg-hp:hover .prod-img .gg-ph,.gg-s2 .prod.gg-hp:hover .prod-img .gg-ph,.gg-s4 .prod.gg-hp:hover .prod-img .gg-ph{transform:translateY(-4%) scale(1.04)}
-.as-item .as-ill .gg-ph{object-fit:contain;background:#fff;mix-blend-mode:multiply}`;
+.as-item .as-ill .gg-ph{object-fit:contain;background:#fff;mix-blend-mode:multiply}
+/* menus et lots (Growth Gusto › Boutique › Menus et lots) on the lunch page */
+.as-item.gg-fo{flex-wrap:wrap}.gg-fo-open{width:40px;height:40px;border-radius:50%;border:1px solid var(--fg);background:var(--fg);color:var(--bg);font-size:22px;line-height:1;cursor:pointer}
+.gg-fo.open .gg-fo-open{background:transparent;color:var(--fg)}
+.gg-fo-b{flex-basis:100%;display:grid;gap:14px;padding:14px 0 4px;border-top:1px dashed var(--line);margin-top:12px}
+.gg-fo-t{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.gg-fo-c{display:flex;flex-wrap:wrap;gap:8px}.gg-fo-c .chip{padding:9px 12px;border:1px solid var(--line);background:transparent;cursor:pointer}.gg-fo-c .chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.gg-fo-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}.gg-fo-go{justify-self:stretch}.gg-fo-go[disabled]{opacity:.45}
+.tk-l small{display:block;color:var(--mute);font-size:12px}.gg-fo-x{border:0;background:none;color:var(--mute);font-size:16px;cursor:pointer;padding:0 4px}
+/* phone: the rayons on one line that scrolls, kept in view while scrolling the shop */
+@media (max-width:760px){#filters{position:sticky;top:var(--gg-top,0px);z-index:30;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;gap:8px;padding:10px 0;background:var(--bg);scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+#filters::-webkit-scrollbar{display:none}#filters>*{flex:none!important;white-space:nowrap;scroll-snap-align:start;padding:10px 14px!important;font-size:15px!important}}`;
     document.head.appendChild(s); document.documentElement.classList.add('gg-s' + GG_STYLE);
   }
 
@@ -1918,7 +1929,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 
   /* ───────── À emporter: the ready-to-eat shelves of Growth Gusto (Plats du midi, arancini…), sent like the cart ───────── */
   const MIDI = /midi|arancin|traiteur|panin|pizza|sandwich|focacc|formule|snack|à emporter|emporter/i;
-  const E = { q: {}, slot: '', day: '', order: null, pollT: 0, on: false };
+  const E = { q: {}, f: [], fo: null, pk: {}, slot: '', day: '', order: null, pollT: 0, on: false };
   /* the rayons ticked « À emporter » in Growth Gusto (Boutique › Rayons); a menu published before that setting: guessed by name */
   const midiItems = () => { const M = G.menu; if (!M) return []; const em = {}; (M.cats || []).forEach((c) => { em[c.id] = typeof c.em === 'boolean' ? c.em : MIDI.test(c.id || '') || MIDI.test(c.t || ''); });
     return M.items.filter((it) => it.p > 0 && !it.gaspi && (typeof it.em === 'boolean' ? it.em : em[it.c])); };
@@ -1928,22 +1939,52 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
       E.on = true; ['.as-menu', '.as-form'].forEach((k) => { const a = $(k, box); if (a) a.replaceWith(a.cloneNode(true)); });
       const hp = $('.as-head p', box); if (hp) hp.textContent = 'Les plats du midi de la Casa : choisissez, indiquez votre heure, la boutique la confirme. Votre commande vous attend au comptoir, vous payez sur place.';
       const seg = $('.seg', box); if (seg) seg.outerHTML = '<p class="gg-paye">Vous réglez au retrait, par carte ou en espèces.</p>';
-      $('.as-menu', box).addEventListener('click', (e) => { const b = e.target.closest('[data-m]'); if (!b) return; const id = b.closest('.as-item').dataset.id;
+      $('.as-menu', box).addEventListener('click', (e) => { if (foClick(e)) return; const b = e.target.closest('[data-m]'); if (!b) return; const id = b.closest('.as-item').dataset.id;
         const mx = left(id); E.q[id] = Math.max(0, Math.min(mx, (E.q[id] || 0) + +b.dataset.m)); paintMenu(); refresh(); });
       $('.as-picker', box).addEventListener('click', (e) => { const d = e.target.closest('[data-ggd]'); if (d) { E.day = d.dataset.ggd; E.slot = ''; paintSlots(); refresh(); return; } const b = e.target.closest('[data-ggs]'); if (!b) return; E.slot = b.dataset.ggs; paintSlots(); refresh(); });
       ['#as-name', '#as-tel'].forEach((k) => $(k, box)?.addEventListener('input', refresh));
       $('.as-form', box).addEventListener('submit', (e) => { e.preventDefault(); send(); });
-      box.addEventListener('click', (e) => { if (e.target.closest('#gg-as-new')) { clearTimeout(E.pollT); E.order = null; E.q = {}; $('.ticket', box).classList.remove('done'); paintMenu(); refresh(); } });
+      box.addEventListener('click', (e) => { const x = e.target.closest('[data-fox]'); if (x) { E.f.splice(+x.dataset.fox, 1); paintMenu(); refresh(); return; } if (e.target.closest('#gg-as-new')) { clearTimeout(E.pollT); E.order = null; E.q = {}; E.f = []; E.fo = null; $('.ticket', box).classList.remove('done'); paintMenu(); refresh(); } });
     }
     paintMenu(); paintSlots(); refresh();
     function paintMenu() {
-      const L = midiItems(), menu = $('.as-menu', box);
-      Object.keys(E.q).forEach((k) => { if (!G.by[k]) delete E.q[k]; });
-      menu.innerHTML = L.length ? L.map((it) => { const n = E.q[it.id] || 0, out = left(it.id) <= 0;
+      const L = midiItems(), menu = $('.as-menu', box), F = G.menu.menus || [];
+      Object.keys(E.q).forEach((k) => { if (!G.by[k]) delete E.q[k]; }); E.f = E.f.filter((x) => F.some((f) => f.id === x.fo));
+      menu.innerHTML = (F.length ? F.map(foHtml).join('') : '') + (L.length ? L.map((it) => { const n = E.q[it.id] || 0, out = left(it.id) <= 0;
         return `<article class="as-item${n ? ' on' : ''}${out ? ' gg-out' : ''}" data-id="${esc(it.id)}"><div class="as-ill">${illus(it.id)}</div>
         <div class="as-txt"><h3>${esc(it.t)}</h3>${it.b ? `<p>${esc(it.b)}</p>` : ''}${it.w ? `<span class="as-w">${esc(it.w)}</span>` : ''}${out ? '<span class="gg-stk">Épuisé</span>' : ''}</div>
         <div class="as-buy"><b>${eur(it.p)}</b><div class="stepper"><button type="button" data-m="-1" aria-label="Retirer">−</button><span>${n}</span><button type="button" data-m="1" aria-label="Ajouter"${out ? ' disabled' : ''}>+</button></div></div></article>`; }).join('')
-        : '<p class="gg-none">Les plats du midi ne sont pas encore en ligne. En attendant, faites vos courses dans la <a href="#boutique">boutique</a>, ou appelez le 09 63 67 76 39.</p>';
+        : F.length ? '' : '<p class="gg-none">Les plats du midi ne sont pas encore en ligne. En attendant, faites vos courses dans la <a href="#boutique">boutique</a>, ou appelez le 09 63 67 76 39.</p>');
+    }
+    /* a menu or a lot (Growth Gusto › Boutique › Menus et lots): « Composer » opens its steps here; same choices one after the other
+       (a lot of 5) = one counter per choice, up to 5 */
+    function foGroups(f) { const g = []; f.steps.forEach((st, i) => { const k = st.ids.join(','), last = g[g.length - 1]; if (last && last.k === k) last.idx.push(i); else g.push({ k, t: st.t, ids: st.ids, idx: [i] }); }); return g; }
+    function foHtml(f) {
+      const open = E.fo === f.id, n = E.f.filter((x) => x.fo === f.id).length;
+      let body = '';
+      if (open) { const sel = E.pk; body = `<div class="gg-fo-b">${foGroups(f).map((g, gi) => { const need = g.idx.length;
+        if (need === 1) return `<div class="gg-fo-g"><span class="gg-fo-t">${esc(g.t)}</span><div class="gg-fo-c">${g.ids.map((id) => `<button type="button" class="chip${sel[gi] === id ? ' on' : ''}" data-fog="${gi}" data-foi="${esc(id)}">${esc((G.by[id] || {}).t || '')}</button>`).join('')}</div></div>`;
+        const cnt = sel[gi] || {}, tot = Object.values(cnt).reduce((a, b) => a + b, 0);
+        return `<div class="gg-fo-g"><span class="gg-fo-t">${esc(g.t)} · ${tot}/${need}</span>${g.ids.map((id) => `<div class="gg-fo-r"><span>${esc((G.by[id] || {}).t || '')}</span><div class="stepper"><button type="button" data-fog="${gi}" data-foc="${esc(id)}" data-d="-1" aria-label="Retirer"${cnt[id] ? '' : ' disabled'}>−</button><span>${cnt[id] || 0}</span><button type="button" data-fog="${gi}" data-foc="${esc(id)}" data-d="1" aria-label="Ajouter"${tot >= need ? ' disabled' : ''}>+</button></div></div>`).join('')}</div>`; }).join('')}
+        <button type="button" class="btn gg-fo-go" data-foadd="${esc(f.id)}"${foPk(f) ? '' : ' disabled'}>${foPk(f) ? `Ajouter · ${eur(f.p)}` : 'Faites vos choix'}</button></div>`; }
+      return `<article class="as-item gg-fo${open ? ' open' : ''}${n ? ' on' : ''}" data-fo="${esc(f.id)}"><div class="as-ill">${f.ph ? `<img class="ill gg-ph" src="${esc(f.ph)}" alt="" loading="lazy">` : `<span class="ill gg-ini">${esc(ini(f.t))}</span>`}</div>
+        <div class="as-txt"><h3>${esc(f.t)}</h3><p>${esc(f.d || f.steps.map((x) => x.t).filter((t, i, a) => a.indexOf(t) === i).join(' + '))}</p>${n ? `<span class="as-w">${n} au panier</span>` : ''}</div>
+        <div class="as-buy"><b>${eur(f.p)}</b><button type="button" class="gg-fo-open" data-foopen="${esc(f.id)}" aria-expanded="${open}" aria-label="Composer ${esc(f.t)}">${open ? '×' : '+'}</button></div>${body}</article>`;
+    }
+    /* the choices made → one product id per step, or null */
+    function foPk(f) { const pk = []; const g = foGroups(f); for (let gi = 0; gi < g.length; gi++) { const v = E.pk[gi];
+      if (g[gi].idx.length === 1) { if (!v) return null; pk.push(v); } else { const L = []; Object.keys(v || {}).forEach((id) => { for (let i = 0; i < v[id]; i++) L.push(id); }); if (L.length !== g[gi].idx.length) return null; pk.push(...L); } }
+      return pk; }
+    function foClick(e) {
+      const F = G.menu.menus || [], t = e.target;
+      const op = t.closest('[data-foopen]'); if (op) { E.fo = E.fo === op.dataset.foopen ? null : op.dataset.foopen; E.pk = {}; paintMenu(); return true; }
+      const f = F.find((x) => x.id === E.fo); if (!f) return false;
+      const c = t.closest('[data-foi]'); if (c) { E.pk[+c.dataset.fog] = c.dataset.foi; paintMenu(); return true; }
+      const k = t.closest('[data-foc]'); if (k) { const gi = +k.dataset.fog, m = (E.pk[gi] = E.pk[gi] || {}); m[k.dataset.foc] = Math.max(0, (m[k.dataset.foc] || 0) + +k.dataset.d); paintMenu(); return true; }
+      const a = t.closest('[data-foadd]'); if (a) { const pk = foPk(f); if (!pk) return true;
+        const by = {}; pk.forEach((id) => { const n = (G.by[id] || {}).t || ''; by[n] = (by[n] || 0) + 1; });
+        E.f.push({ fo: f.id, pk, t: f.t, p: f.p, what: Object.keys(by).map((n) => n + (by[n] > 1 ? ' ×' + by[n] : '')).join(', ') }); E.fo = null; E.pk = {}; paintMenu(); refresh(); return true; }
+      return !!t.closest('.gg-fo-b');
     }
     function paintSlots() {
       const pk = $('.as-picker', box), D = G.menu.open ? dset(G.menu) : []; if (!D.includes(E.day)) E.day = D[0] || ''; const L = E.day ? GGBoutique.slots(G.menu, E.day) : []; if (!L.includes(E.slot)) E.slot = L[0] || '';
@@ -1952,12 +1993,12 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     }
     function refresh() {
       const ids = Object.keys(E.q).filter((k) => E.q[k] > 0 && G.by[k]);
-      $('.tk-lines', box).innerHTML = ids.length ? ids.map((k) => `<div class="tk-l"><span>${E.q[k]} × ${esc(G.by[k].t)}</span><b>${eur(E.q[k] * G.by[k].p)}</b></div>`).join('') : '<p class="tk-empty">Choisissez vos plats dans la carte.</p>';
-      const t = ids.reduce((a, k) => a + E.q[k] * G.by[k].p, 0); $('.tk-total', box).textContent = eur(t);
+      $('.tk-lines', box).innerHTML = ids.length || E.f.length ? E.f.map((x, i) => `<div class="tk-l"><span>${esc(x.t)} <small>${esc(x.what)}</small> <button type="button" class="gg-fo-x" data-fox="${i}" aria-label="Retirer ${esc(x.t)}">×</button></span><b>${eur(x.p)}</b></div>`).join('') + ids.map((k) => `<div class="tk-l"><span>${E.q[k]} × ${esc(G.by[k].t)}</span><b>${eur(E.q[k] * G.by[k].p)}</b></div>`).join('') : '<p class="tk-empty">Choisissez vos plats dans la carte.</p>';
+      const t = ids.reduce((a, k) => a + E.q[k] * G.by[k].p, 0) + E.f.reduce((a, x) => a + x.p, 0); $('.tk-total', box).textContent = eur(t);
       $('.tk-when', box).textContent = E.slot ? `Retrait ${dTxt(E.day)} à ${hmFr(E.slot)}, à confirmer par la boutique` : '';
       const nm = ($('#as-name', box)?.value || '').trim(), tel = ($('#as-tel', box)?.value || '').replace(/\D/g, '');
-      const ok = ids.length && E.slot && nm.length > 1 && tel.length >= 8, btn = $('#as-go', box); btn.disabled = !ok;
-      btn.querySelector('span').textContent = !ids.length ? 'Ajoutez un produit' : !E.slot ? 'Pas de créneau disponible' : nm.length < 2 ? 'Indiquez votre prénom' : tel.length < 8 ? 'Indiquez votre téléphone' : `Envoyer la commande · ${eur(t)}`;
+      const any = ids.length || E.f.length, ok = any && E.slot && nm.length > 1 && tel.length >= 8, btn = $('#as-go', box); btn.disabled = !ok;
+      btn.querySelector('span').textContent = !any ? 'Ajoutez un produit' : !E.slot ? 'Pas de créneau disponible' : nm.length < 2 ? 'Indiquez votre prénom' : tel.length < 8 ? 'Indiquez votre téléphone' : `Envoyer la commande · ${eur(t)}`;
     }
     async function send() {
       const btn = $('#as-go', box); if (btn.disabled) return;
@@ -1965,10 +2006,10 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
       if (!er) { btn.insertAdjacentHTML('beforebegin', '<p class="gg-err" id="gg-as-err" role="alert"></p>'); er = $('#gg-as-err', box); }
       btn.disabled = true; btn.querySelector('span').textContent = 'Envoi…'; er.textContent = '';
       try {
-        const r = await GGBoutique.order(rid, { items: ids.map((k) => ({ id: k, q: E.q[k] })), name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot, day: E.day });
+        const r = await GGBoutique.order(rid, { items: [...E.f.map((x) => ({ fo: x.fo, q: 1, pk: x.pk })), ...ids.map((k) => ({ id: k, q: E.q[k] }))], name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot, day: E.day });
         E.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...E.order, at: Date.now() })); } catch (e) {}
-        $('.ticket', box).classList.add('done'); paintOk(r.order || {}); poll();
+        E.f = []; $('.ticket', box).classList.add('done'); paintOk(r.order || {}); poll();
         if (window.gsap) gsap.from('#asporto .tk-done .stamp', { scale: 3, rotate: -40, opacity: 0, duration: .6, ease: 'back.out(2.2)' });
       } catch (e) { er.textContent = GGBoutique.say(e); refresh(); if (/plat|prix/.test(e.message)) load(); }
     }
@@ -1993,7 +2034,22 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     apply();
     try { if (emporter.paint) emporter.paint(); else emporter(); } catch (e) { console.warn('Growth Gusto : à emporter', e); }
   }
-  function start() { css(); checkout(); load(); setInterval(() => { if (!document.hidden && !$('.co-open')) load(); }, 60000); }
+  /* « À emporter » holds the lunch dishes, while everything in the shop can be taken away (Marceau 2026-11-21): the tab says « Le midi » */
+  function relabel() {
+    const tx = (el, a, b) => { if (!el) return; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.nodeValue.includes(a)) n.nodeValue = n.nodeValue.replace(a, b); };
+    $$('a[href="#emporter"]').forEach((a) => { tx(a, 'Commander à emporter', 'Commander le midi'); tx(a, 'À emporter', 'Le midi'); });
+    $$('a[href="#emporter"] small').forEach((x) => { if (x.textContent.trim() === 'Le midi') x.textContent = 'À la Casa'; });
+    const h = $('[data-page="emporter"] .eyebrow'); if (h) h.textContent = 'Pranzo · le midi';
+    /* phone: the rayons leave the page title to sit right above the products, so they can stay in view (sticky) over the whole list */
+    const fl = $('#filters'), gr = $('#grid'); if (fl && gr && matchMedia('(max-width:760px)').matches && fl.parentElement !== gr.parentElement) gr.parentElement.insertBefore(fl, gr);
+    /* a rayon touched further down: back to the top of its products */
+    document.addEventListener('click', (e) => { if (!e.target.closest('#filters button, #filters a')) return; setTimeout(() => { const f = $('#filters'), g = $('#grid'); if (!f || !g) return;
+      const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gg-top')) || 0, y = g.getBoundingClientRect().top + scrollY - top - f.offsetHeight - 8;
+      if (scrollY > y) window.scrollTo({ top: y, behavior: 'smooth' }); }, 30); });
+    /* the rayons stay under the header when it is sticky */
+    const hd = $('header'); if (hd && /sticky|fixed/.test(getComputedStyle(hd).position)) document.documentElement.style.setProperty('--gg-top', hd.offsetHeight + 'px');
+  }
+  function start() { css(); relabel(); checkout(); load(); setInterval(() => { if (!document.hidden && !$('.co-open')) load(); }, 60000); }
   const s = document.createElement('script'); s.src = SRC; s.onload = () => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start()); document.head.appendChild(s);
 })();
 </script>
