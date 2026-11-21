@@ -68,6 +68,30 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-cc p{margin:0;font-size:16px;line-height:1.45;color:var(--fg)}.gg-cc p b{color:var(--verde,#2E9E5B)}
 .gg-cc .gg-cc-b{font-size:16px;padding:16px 26px}
 @media (max-width:520px){.gg-cc{padding:14px 16px}.gg-cc .gg-cc-b{width:100%;justify-content:center}}
+/* the rayons as a menu, then the products line by line */
+#filters.gg-tabs-menu{display:none}
+#grid.gg-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.gg-tile{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:16px;padding:14px 18px 14px 14px;background:var(--paper,#fff);border:1px solid var(--line);color:inherit;text-decoration:none;transition:transform .2s,box-shadow .2s,border-color .2s}
+.gg-tile:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:var(--verde,#2E9E5B)}
+.gg-tile-ill{width:92px;height:92px;display:grid;place-items:center;background:#F6F1E6;border-radius:50%;overflow:hidden}.gg-tile-ill svg{width:84px;height:84px}
+.gg-tile-tx{display:grid;gap:4px}.gg-tile-tx b{font-family:var(--display);font-weight:500;font-size:24px;line-height:1.1}
+.gg-tile-tx em{font-style:normal;font-size:14px;line-height:1.35;opacity:.75}.gg-tile-tx small{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--verde,#2E9E5B)}
+.gg-tile-go{font-size:22px;color:var(--verde,#2E9E5B)}
+#filters.gg-tabs .gg-back{background:transparent;border-style:dashed}
+#grid.gg-lines{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.gg-lh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:18px 2px 12px}.gg-lh h2{margin:0;font-family:var(--display);font-weight:500;font-size:clamp(26px,3vw,36px)}.gg-lh span{font-size:13px;opacity:.65}
+#grid.gg-lines .gg-mn{margin:0 0 10px}
+#grid.gg-lines .prod{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center;padding:12px 2px;border:0;border-bottom:1px solid var(--line);background:transparent;box-shadow:none;transform:none;border-radius:0}
+#grid.gg-lines .prod-img{width:64px;height:64px;aspect-ratio:auto;margin:0;padding:0;border-radius:10px;overflow:hidden}
+#grid.gg-lines .prod-img .ill{width:100%;height:100%;object-fit:contain}#grid.gg-lines .prod-img svg{width:100%;height:100%}
+#grid.gg-lines .prod-img .quick,#grid.gg-lines .prod-cat,#grid.gg-lines .prod-tag{display:none}
+#grid.gg-lines .prod-meta{display:grid;grid-template-columns:1fr auto;grid-template-areas:"n r" "d r";column-gap:14px;row-gap:2px;align-items:center;padding:0}
+#grid.gg-lines .prod-name{grid-area:n;margin:0;font-size:17px;line-height:1.25;cursor:pointer}
+#grid.gg-lines .prod-desc{grid-area:d;margin:0;font-size:13px;opacity:.7}
+#grid.gg-lines .prod-row{grid-area:r;display:flex;align-items:center;gap:12px;margin:0}
+#grid.gg-lines .prod-price{font-size:16px;white-space:nowrap}
+@media (max-width:520px){#grid.gg-tiles{grid-template-columns:1fr;gap:10px}.gg-tile{grid-template-columns:68px 1fr auto;gap:12px;padding:10px 14px 10px 10px}.gg-tile-ill{width:68px;height:68px}.gg-tile-ill svg{width:62px;height:62px}.gg-tile-tx b{font-size:20px}.gg-tile-tx em{font-size:13px}
+#grid.gg-lines .prod{grid-template-columns:52px 1fr;gap:10px}#grid.gg-lines .prod-img{width:52px;height:52px}#grid.gg-lines .prod-name{font-size:15px}}
 /* one page: the menus and lots as wide cards at the top of the products */
 .gg-lead{color:var(--mute);margin:10px 0 0;max-width:56ch;font-size:16px;line-height:1.45}
 .gg-mn{grid-column:1/-1;border:1px solid var(--line);background:var(--paper,var(--bg));padding:14px 16px}
@@ -356,7 +380,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 
   /* ───────── one page (Lilou, 2026-11-21): the products are the home page, the rayons on top with « Le midi » first,
      the menus and lots inside the shop, one cart for everything ───────── */
-  const ONE = { f: 'Tout', fo: null, pk: {} }; G.F = [];
+  const ONE = { f: null, fo: null, pk: {} }; G.F = [];
   const MIDI_F = '__midi';
   const emIds = () => new Set(midiItems().map((it) => it.id));
   const catT = () => { const c = {}; ((G.menu && G.menu.cats) || []).forEach((x) => { c[x.id] = x.t; }); return c; };
@@ -369,37 +393,62 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     $$('.hero-txt .btns', home).forEach((b) => { const d = document.createElement('div'); d.className = 'gg-cc';
       d.innerHTML = `<p><b>Nouveau : le Click &amp; Collect.</b> Choisissez vos produits et votre menu du midi en ligne, on prépare votre panier, vous le récupérez en boutique sans attendre.</p><a class="btn gg-cc-b" href="#boutique">Commander en Click &amp; Collect <span>→</span></a>`; b.replaceWith(d); });
     const tg = $('#taglio'); if (tg) home.appendChild(tg);
-    const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 30 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique. Le midi : menus, plats et douceurs à emporter.</p>`; }
+    const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 30 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique.</p>`; }
     /* the old pages « Boutique » and « À emporter » are now this page: their links open it on the right rayon */
-    const goShop = (f) => { if (f) { ONE.f = f; if (G.menu) { paintChips(); renderGrid('#grid', 999); } }
+    const goShop = (f) => { if (f) { ONE.f = f === '__menu' ? null : f; if (G.menu) { paintChips(); renderGrid('#grid', 999); } }
       let a = $('#gg-go'); if (!a) { a = document.createElement('a'); a.id = 'gg-go'; a.href = '#shop'; a.hidden = true; document.body.appendChild(a); } a.click(); };
     document.addEventListener('click', (e) => { const a = e.target.closest('a[href="#boutique"], a[href="#emporter"]'); if (!a) return;
-      e.preventDefault(); e.stopImmediatePropagation(); goShop(a.getAttribute('href') === '#emporter' ? MIDI_F : 'Tout'); }, true);
-    const old = (ms) => { if (/^#(boutique|emporter)$/.test(location.hash)) { const f = location.hash === '#emporter' ? MIDI_F : 'Tout'; setTimeout(() => goShop(f), ms); } };
+      e.preventDefault(); e.stopImmediatePropagation(); goShop(a.getAttribute('href') === '#emporter' ? 'foc' : '__menu'); }, true);
+    const old = (ms) => { if (/^#(boutique|emporter)$/.test(location.hash)) { const f = location.hash === '#emporter' ? 'foc' : '__menu'; setTimeout(() => goShop(f), ms); } };
     old(50); addEventListener('hashchange', () => old(1300)); /* after the site's page change */
   }
-  /* the rayons: « Tout », « Le midi » (what is ticked « À emporter » in Growth Gusto, and the menus), then each rayon */
+  /* the rayons are a menu (Marceau 2026-11-21): after « Click & Collect » no product shows, the visitor picks a tab
+     (Charcuterie, Fromages, Épicerie salée…) and its products open line by line. The Growth Gusto rayons are grouped into these tabs. */
+  const TABS = [
+    { k: 'charc', t: 'Charcuterie', d: 'Jambons, salami, mortadelle, coupés à la commande', il: 'salame', r: ['Charcuterie'] },
+    { k: 'from', t: 'Fromages', d: 'Parmigiano, burrata, pecorino, gorgonzola', il: 'pecorino', r: ['Fromages'] },
+    { k: 'sal', t: 'Épicerie salée', d: 'Pâtes, sauces, huiles, riz et conserves', il: 'pomodoro', r: ['Pâtes et sauces', 'Huiles', 'Épicerie', 'Riz'] },
+    { k: 'suc', t: 'Épicerie sucrée', d: 'Biscuits, cannoli, cannoncini et douceurs', il: 'biscotti', r: ['Biscuits et douceurs', 'Desserts'] },
+    { k: 'pan', t: 'Panettone', d: 'Panettoni, pandori et douceurs de Noël', il: 'panettone', r: ['Panettoni et Noël'] },
+    { k: 'plats', t: 'Plats préparés', d: 'Lasagnes, parmigiana, arancini', il: 'arancino', r: ['Plats du midi', 'Arancini'] },
+    { k: 'foc', t: 'Focaccia', d: 'Focacce à la part et menus du midi', il: 'focaccia', r: [] },
+    { k: 'bois', t: 'Vins et boissons', d: 'Vins, apéritifs, sodas italiens, café', il: 'vino', r: ['Apéritif et vins', 'Boissons', 'Café à emporter'] },
+    { k: 'gaspi', t: 'Anti-gaspi', d: 'Dates courtes à prix réduit', il: 'board', r: ['Anti-gaspi'] }];
+  const tabOf = (p) => { if (/focacc/i.test(p.n)) return 'foc'; const t = TABS.find((x) => x.r.includes(p.c)); return t ? t.k : 'sal'; };
+  const mTab = (f) => { const nm = (f.t || '') + ' ' + (f.steps || []).map((st) => st.ids.map((id) => (G.by[id] || {}).t || '').join(' ')).join(' ');
+    if (!f.lot && /focacc/i.test(nm)) return 'foc'; if (/cannon|cannol|tiramis|biscot/i.test(nm)) return 'suc'; const c = catT()[f.c]; const t = TABS.find((x) => x.r.includes(c)); return t ? t.k : 'foc'; };
+  const tabList = (k) => P.filter((p) => tabOf(p) === k);
+  const tabMenus = (k) => ((G.menu && G.menu.menus) || []).filter((f) => mTab(f) === k);
+  const tabsOn = () => TABS.filter((t) => tabList(t.k).length || tabMenus(t.k).length);
+  const tIll = (k) => { const K = (typeof ILLUS === 'object' && ILLUS[k]) ? k : 'board'; try { return illus0(K); } catch (e) { return ''; } };
   function paintChips() {
-    const f = $('#filters'); if (!f || !G.menu) return;
-    const em = emIds(), ord = (G.menu.cats || []).map((c) => c.t), used = [...new Set(P.map((p) => p.c))].sort((x, y) => (ord.indexOf(x) + 1 || 99) - (ord.indexOf(y) + 1 || 99)); /* the order of the rayons in Growth Gusto */
-    const L = [['Tout', 'Tout'], ...(em.size || (G.menu.menus || []).length ? [[MIDI_F, 'Le midi']] : []), ...used.map((c) => [c, c])];
-    if (!L.some((x) => x[0] === ONE.f)) ONE.f = 'Tout';
-    f.innerHTML = L.map(([k, t]) => `<button type="button" class="chip${k === ONE.f ? ' on' : ''}${k === MIDI_F ? ' gg-midi' : ''}" data-f="${esc(k)}">${esc(t)}</button>`).join('');
+    const f = $('#filters'); if (!f || !G.menu) return; const L = tabsOn();
+    if (ONE.f && !L.some((x) => x.k === ONE.f)) ONE.f = null;
+    f.classList.toggle('gg-tabs', true); f.classList.toggle('gg-tabs-menu', !ONE.f);
+    f.innerHTML = (ONE.f ? '<button type="button" class="chip gg-back" data-f="">← Tous les rayons</button>' : '') + L.map((t) => `<button type="button" class="chip${t.k === ONE.f ? ' on' : ''}" data-f="${t.k}">${esc(t.t)}</button>`).join('');
   }
   filters = function (sel, gridSel, n) { // eslint-disable-line no-global-assign
     const f = $(sel); if (!f || sel !== '#filters' || !G.menu) return;
     paintChips();
-    f.addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; ONE.f = b.dataset.f; ONE.fo = null; ONE.pk = {};
-      $$('.chip', f).forEach((x) => x.classList.toggle('on', x === b)); b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-      const g = $(gridSel); g.classList.add('swap'); setTimeout(() => { renderGrid(gridSel, n); g.classList.remove('swap'); }, 200); });
+    f.addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; pick(b.dataset.f || null, gridSel, n); });
   };
+  function pick(k, gridSel, n) {
+    ONE.f = k; ONE.fo = null; ONE.pk = {}; paintChips();
+    const b = k && $(`#filters [data-f="${k}"]`); if (b) b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    const g = $(gridSel || '#grid'); if (!g) return; g.classList.add('swap'); setTimeout(() => { renderGrid(gridSel || '#grid', n || 999); g.classList.remove('swap'); }, 160);
+  }
+  document.addEventListener('click', (e) => { const t = e.target.closest('[data-tab]'); if (!t) return; e.preventDefault(); pick(t.dataset.tab, '#grid', 999);
+    setTimeout(() => { const f = $('#filters'); if (f) { const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gg-top')) || 0; window.scrollTo({ top: f.getBoundingClientRect().top + scrollY - top - 12, behavior: 'smooth' }); } }, 200); });
   const rg0 = renderGrid;
   renderGrid = function (sel, n) { // eslint-disable-line no-global-assign
     if (sel !== '#grid' || !G.menu) return rg0.apply(this, arguments);
-    const g = $(sel); if (!g) return; const f = ONE.f, cat = catT(), em = emIds();
-    const list = f === MIDI_F ? P.filter((p) => em.has(p.id)) : f === 'Tout' ? P : P.filter((p) => p.c === f);
-    const F = (G.menu.menus || []).filter((m) => f === 'Tout' || f === MIDI_F || cat[m.c] === f);
-    g.innerHTML = F.map(mnHtml).join('') + list.map(card).join('') || '<p class="gg-none">Rien dans ce rayon pour le moment.</p>';
+    const g = $(sel); if (!g) return; const k = ONE.f;
+    g.classList.toggle('gg-lines', !!k); g.classList.toggle('gg-tiles', !k);
+    if (!k) { g.innerHTML = tabsOn().map((t) => { const nb = tabList(t.k).length + tabMenus(t.k).length;
+      return `<a class="gg-tile" href="#shop" data-tab="${t.k}"><span class="gg-tile-ill">${tIll(t.il)}</span><span class="gg-tile-tx"><b>${esc(t.t)}</b><em>${esc(t.d)}</em><small>${nb} ${nb > 1 ? 'produits' : 'produit'}</small></span><span class="gg-tile-go" aria-hidden="true">→</span></a>`; }).join('');
+      return; }
+    const tb = TABS.find((x) => x.k === k), list = tabList(k), F = tabMenus(k);
+    g.innerHTML = `<div class="gg-lh"><h2>${esc(tb ? tb.t : '')}</h2><span>${list.length + F.length} produits</span></div>` + (F.map(mnHtml).join('') + list.map(card).join('') || '<p class="gg-none">Rien dans ce rayon pour le moment.</p>');
     observe($$('.rv', g));
   };
   /* a menu or a lot in the shop: « Composer » opens its choices on the card; a lot of 5 = one counter per flavour */
