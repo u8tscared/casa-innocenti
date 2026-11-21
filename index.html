@@ -1897,7 +1897,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
       const H = stH(o, st);
       ok.innerHTML = `<div class="gg-st"><div class="stamp">${H[0]}</div><h3>${esc(H[1])}${G.order.n ? ` <span class="ref">n° ${esc(G.order.n)}</span>` : ''}</h3><p>${esc(H[2])}</p>
         ${st === 'demande' ? '<p class="gg-wait"><span class="gg-dots"><i></i><i></i><i></i></span>En attente de la boutique</p>' : ''}
-        <a class="btn ghost" href="${esc(G.order.track)}" target="_blank" rel="noopener" data-gg-suivi>Suivre ma commande →</a><button type="button" class="btn" data-co-close>Continuer mes courses</button></div>`;
+        <a class="btn ghost" href="${esc(G.order.track)}" target="_blank" rel="noopener">Suivre ma commande →</a><button type="button" class="btn" data-co-close>Continuer mes courses</button></div>`;
     }
     async function poll() {
       clearTimeout(G.pollT); if (!G.order) return;
@@ -1967,7 +1967,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
       const st = o.status || E.order.st, H = stH(o, st);
       $('.tk-done', box).innerHTML = `<div class="stamp">${H[0]}</div><p class="tk-ref">${esc(H[1])}${E.order.n ? ` · n° <b>${esc(E.order.n)}</b>` : ''}</p><p>${esc(H[2])}</p>
         ${st === 'demande' ? '<p class="gg-wait"><span class="gg-dots"><i></i><i></i><i></i></span> En attente de la boutique</p>' : ''}
-        <a class="btn ghost" href="${esc(E.order.track)}" target="_blank" rel="noopener" data-gg-suivi>Suivre ma commande →</a><button type="button" class="btn" id="gg-as-new">Nouvelle commande</button>`;
+        <a class="btn ghost" href="${esc(E.order.track)}" target="_blank" rel="noopener">Suivre ma commande →</a><button type="button" class="btn" id="gg-as-new">Nouvelle commande</button>`;
     }
     async function poll() {
       clearTimeout(E.pollT); if (!E.order) return;
@@ -1985,11 +1985,6 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     try { if (emporter.paint) emporter.paint(); else emporter(); } catch (e) { console.warn('Growth Gusto : à emporter', e); }
   }
   function start() { css(); checkout(); load(); setInterval(() => { if (!document.hidden && !$('.co-open')) load(); }, 60000); }
-  /* « Suivre ma commande » opens the Growth Gusto tracking page IN the site, dressed in the site's style (gg.js « caméléon »):
-     no new tab, no violet page. Without gg.js (blocked, offline), the link opens the page in a new tab as before. */
-  const W = document.createElement('script'); W.src = 'https://app.growthgusto.fr/w/gg.js'; W.async = true; document.head.appendChild(W);
-  document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[data-gg-suivi]'); if (!a || !window.GGW || !GGW.show) return;
-    if (GGW.show(a.href, 'Suivre ma commande')) e.preventDefault(); });
   const s = document.createElement('script'); s.src = SRC; s.onload = () => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start()); document.head.appendChild(s);
 })();
 </script>
