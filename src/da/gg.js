@@ -64,6 +64,10 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-fo-c{display:flex;flex-wrap:wrap;gap:8px}.gg-fo-c .chip{padding:9px 12px;border:1px solid var(--line);background:transparent;cursor:pointer}.gg-fo-c .chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .gg-fo-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}.gg-fo-go{justify-self:stretch}.gg-fo-go[disabled]{opacity:.45}
 .tk-l small{display:block;color:var(--mute);font-size:12px}.gg-fo-x{border:0;background:none;color:var(--mute);font-size:16px;cursor:pointer;padding:0 4px}
+.gg-cc{display:grid;gap:16px;justify-items:start;max-width:560px;margin-top:22px;padding:18px 20px;border:1px solid var(--line);background:var(--paper,#fff);border-left:4px solid var(--verde,#2E9E5B)}
+.gg-cc p{margin:0;font-size:16px;line-height:1.45;color:var(--fg)}.gg-cc p b{color:var(--verde,#2E9E5B)}
+.gg-cc .gg-cc-b{font-size:16px;padding:16px 26px}
+@media (max-width:520px){.gg-cc{padding:14px 16px}.gg-cc .gg-cc-b{width:100%;justify-content:center}}
 /* one page: the menus and lots as wide cards at the top of the products */
 .gg-lead{color:var(--mute);margin:10px 0 0;max-width:56ch;font-size:16px;line-height:1.45}
 .gg-mn{grid-column:1/-1;border:1px solid var(--line);background:var(--paper,var(--bg));padding:14px 16px}
@@ -360,9 +364,10 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   const cartN = () => Object.keys(cart).reduce((s, k) => s + (cart[k] > 0 ? cart[k] : 0), 0);
   function onePage() {
     const home = $('[data-page="accueil"]'), shop = $('#shop'); if (!home || !shop) return;
-    const hero = $('#hero');
-    if (hero) hero.after(shop); else home.insertBefore(shop, home.firstChild);
-    const sec = (el) => el && el.closest('section'); [sec($('#grid-home')), $('.reparti'), hero].forEach((s) => { if (s) s.hidden = true; });
+    /* the home stays the welcome (name, hours, reviews): one big Click & Collect button opens the shop page, the products are not on the home */
+    const sec = (el) => el && el.closest('section'); [sec($('#grid-home')), $('.reparti')].forEach((s) => { if (s) s.hidden = true; });
+    $$('.hero-txt .btns', home).forEach((b) => { const d = document.createElement('div'); d.className = 'gg-cc';
+      d.innerHTML = `<p><b>Nouveau : le Click &amp; Collect.</b> Choisissez vos produits et votre menu du midi en ligne, on prépare votre panier, vous le récupérez en boutique sans attendre.</p><a class="btn gg-cc-b" href="#boutique">Commander en Click &amp; Collect <span>→</span></a>`; b.replaceWith(d); });
     const tg = $('#taglio'); if (tg) home.appendChild(tg);
     const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 30 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique. Le midi : menus, plats et douceurs à emporter.</p>`; }
     /* the old pages « Boutique » and « À emporter » are now this page: their links open it on the right rayon */

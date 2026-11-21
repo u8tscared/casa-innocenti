@@ -28,6 +28,8 @@
 .intro .wl{overflow:hidden;display:block;padding-bottom:.08em}
 .intro .rule{display:flex;width:min(320px,60vw);height:3px;margin:0 auto}.intro .rule i{flex:1;background:#1F7A46;transform:scaleX(0);transform-origin:left}.intro .rule i:nth-child(2){background:#F3F0E8}.intro .rule i:nth-child(3){background:#C8202F}
 .intro .sub{font-size:12px;letter-spacing:.4em;text-transform:uppercase;opacity:.8}
+.intro .cc{display:grid;gap:4px;justify-items:center;margin-top:10px;background:#F3F0E8;color:#0E3B2C;border-radius:999px;padding:14px 30px 13px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.intro .cc b{font-family:var(--display);font-weight:500;font-size:clamp(22px,3.2vw,34px);line-height:1.05}.intro .cc small{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#1F7A46}
+@media (max-width:520px){.intro .cc{border-radius:22px;padding:14px 20px;max-width:88vw}}
 .top{background:#0E3B2C;color:#F3F0E8;font-size:12.5px;letter-spacing:.1em;text-align:center;padding:9px 16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:41;background:var(--bg)}
@@ -835,14 +837,15 @@ header.site{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-fil
   const tl = gsap.timeline({defaults:{ease:'power4.out'}});
   const intro = document.createElement('div'); intro.className = 'intro'; intro.setAttribute('aria-hidden', 'true');
   const split = t => [...t].map(c => `<span class="ch">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
-  intro.innerHTML = `<div class="col"></div><div class="col"></div><div class="col"></div><div class="mark"><span class="sub">Épicerie fine italienne</span><span class="word"><span class="wl">${split('Casa')} <em>${split('Innocenti')}</em></span></span><span class="rule"><i></i><i></i><i></i></span><span class="sub">Saint-Priest</span></div>`;
+  intro.innerHTML = `<div class="col"></div><div class="col"></div><div class="col"></div><div class="mark"><span class="sub">Épicerie fine italienne</span><span class="word"><span class="wl">${split('Casa')} <em>${split('Innocenti')}</em></span></span><span class="rule"><i></i><i></i><i></i></span><span class="sub">Saint-Priest</span><span class="cc"><b>Désormais en Click &amp; Collect</b><small>Commandez en ligne, retirez en boutique</small></span></div>`;
   document.body.appendChild(intro);
   const out = gsap.timeline({paused:true}).to(intro.querySelector('.mark'), {yPercent:-30, opacity:0, duration:.45, ease:'power3.in'})
     .to(intro.querySelectorAll('.col'), {yPercent:-100, duration:.75, stagger:.07, ease:'expo.inOut'}, '-=.2').add(() => intro.remove());
   tl.from(intro.querySelectorAll('.ch'), {yPercent:110, rotate:6, duration:.6, stagger:.025})
     .from(intro.querySelectorAll('.sub'), {opacity:0, y:8, duration:.4, stagger:.1}, '<.15')
     .to(intro.querySelectorAll('.rule i'), {scaleX:1, duration:.3, stagger:.07, ease:'power2.inOut'}, '-=.35')
-    .add(() => out.play(), '+=.05');
+    .from(intro.querySelector('.cc'), {opacity:0, y:16, scale:.94, duration:.7, ease:'back.out(1.6)'}, '-=.05')
+    .add(() => out.play(), '+=3.4');
   intro.addEventListener('click', () => { tl.progress(1); out.play(); });
   const seen = false;
   O.app = 0; place();
