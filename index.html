@@ -1795,6 +1795,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-mn-tx b{font-family:var(--display,Georgia,serif);font-size:21px;font-weight:500;line-height:1.15}.gg-mn-tx em{font-style:normal;color:var(--mute);font-size:14px}.gg-mn-tx i{font-style:normal;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--verde,#2E9E5B)}
 .gg-mn-p{display:grid;justify-items:end;gap:8px}.gg-mn-p b{font-variant-numeric:tabular-nums;font-size:17px}
 .gg-mn-b{display:grid;gap:14px;padding:14px 0 4px;border-top:1px dashed var(--line);margin-top:14px}.gg-mn.open .gg-fo-open{background:transparent;color:var(--fg)}
+#taglio,.pin-spacer:has(> #taglio){display:none!important}
 .gg-mn-b .chip[disabled]{opacity:.4}
 /* phone: the page never slides left or right (Marceau 2026-11-22): the width is locked, only the rows of chips scroll sideways */
 html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x:none}.top a{display:block;overflow:hidden;text-overflow:ellipsis}
@@ -2113,7 +2114,10 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     const sec = (el) => el && el.closest('section'); [sec($('#grid-home')), $('.reparti')].forEach((s) => { if (s) s.hidden = true; });
     $$('.hero-txt .btns', home).forEach((b) => { const d = document.createElement('div'); d.className = 'gg-cc';
       d.innerHTML = `<p><b>Nouveau : le Click &amp; Collect.</b> Choisissez vos produits et votre menu du midi en ligne, on prépare votre panier, vous le récupérez en boutique sans attendre.</p><a class="btn gg-cc-b" href="#boutique">Commander en Click &amp; Collect <span>→</span></a>`; b.replaceWith(d); });
-    const tg = $('#taglio'); if (tg) home.appendChild(tg);
+    /* the slicer scene (« Tranché à la commande ») is gone (Marceau 2026-11-22: it showed up while scrolling the shop): hidden, its scroll animation stopped */
+    const noTaglio = () => { try { if (window.ScrollTrigger) { ScrollTrigger.getAll().forEach((t) => { const el = t.trigger || (t.vars && t.vars.trigger); if (el && (el === $('#taglio') || el === '#taglio' || (el.closest && el.closest('#taglio')))) t.kill(true); }); ScrollTrigger.refresh(); } } catch (e) {}
+      $$('a[href="#taglio"]').forEach((a) => { const li = a.closest('li'); (li || a).hidden = true; }); };
+    noTaglio(); addEventListener('load', () => setTimeout(noTaglio, 50));
     const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 32 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique.</p>`; }
     /* the old pages « Boutique » and « À emporter » are now this page: their links open it on the right rayon */
     const goShop = (f) => { if (f) { ONE.f = f === '__menu' ? null : f; if (G.menu) { paintChips(); renderGrid('#grid', 999); } }
@@ -2138,13 +2142,17 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
   /* the tabs set in Growth Gusto (Boutique › Réglages › Onglets du site): name, sentence, order and rayons; none = the ones above.
      Anti-gaspi stays last. The illustration follows the name. */
   const ILL_OF = [[/charc|salum|jambon/, 'salame'], [/fromag|formag/, 'pecorino'], [/sucr|biscu|dolc|douceur/, 'biscotti'], [/panet|pandor|noel|noël/, 'panettone'], [/plat|arancin|midi|traiteur/, 'arancino'], [/focac/, 'focaccia'], [/vin|boiss|cafe|café|apero|apéro/, 'vino'], [/sal|epic|épic|pate|pâte|huile/, 'pomodoro']];
+  /* « Plateaux » (Marceau 2026-11-22): its own tab next to Charcuterie and Fromages, where the client composes a board */
+  const PL_TAB = { k: 'plx', t: 'Plateaux', d: 'Composez votre plateau : charcuterie et fromages au poids', il: 'board', r: [] };
+  const withPl = (L) => { if (!((G.menu && G.menu.menus) || []).some((f) => f.pl) || L.some((x) => x.k === PL_TAB.k)) return L; const out = L.slice(), i = out.findIndex((x) => /fromag|formag/i.test(x.t)), j = out.findIndex((x) => /charc|salum/i.test(x.t));
+    out.splice(i >= 0 ? i + 1 : j >= 0 ? j + 1 : 0, 0, PL_TAB); return out; };
   let TABS = TABS0, TABS_OF = null;
   const tabsFromGG = () => { const L = (G.menu && G.menu.tabs) || []; if (!L.length) { TABS = TABS0; return; } const ct = catT();
     TABS = L.map((x) => { const n = x.t.toLowerCase(), old = TABS0.find((y) => y.t.toLowerCase() === n); return { k: old ? old.k : x.k /* « À emporter » opens 'foc' */, t: x.t, d: x.d, il: old ? old.il : ((ILL_OF.find(([re]) => re.test(n)) || [, 'board'])[1]), r: x.c.map((c) => ct[c]).filter(Boolean), foc: /focac/.test(n) }; });
     if (!TABS.some((t) => t.r.includes('Anti-gaspi'))) TABS.push(TABS0[TABS0.length - 1]); };
-  const tabsSync = () => { if (G.menu && TABS_OF !== G.menu) { TABS_OF = G.menu; tabsFromGG(); } };
+  const tabsSync = () => { if (G.menu && TABS_OF !== G.menu) { TABS_OF = G.menu; tabsFromGG(); TABS = withPl(TABS); } };
   const tabOf = (p) => { tabsSync(); const fk = TABS.find((x) => x.foc || x.k === 'foc'); if (fk && /focacc/i.test(p.n)) return fk.k; const t = TABS.find((x) => x.r.includes(p.c)); return t ? t.k : (TABS.find((x) => x.k === 'sal') || TABS.find((x) => !x.foc && x.r.length) || TABS[0]).k; };
-  const mTab = (f) => { tabsSync(); const nm = (f.t || '') + ' ' + (f.steps || []).map((st) => st.ids.map((id) => (G.by[id] || {}).t || '').join(' ')).join(' ');
+  const mTab = (f) => { tabsSync(); if (f.pl && TABS.some((x) => x.k === PL_TAB.k)) return PL_TAB.k; const nm = (f.t || '') + ' ' + (f.steps || []).map((st) => st.ids.map((id) => (G.by[id] || {}).t || '').join(' ')).join(' ');
     const fk = (TABS.find((x) => x.foc || x.k === 'foc') || {}).k, sk = (TABS.find((x) => x.k === 'suc' || /sucr|douceur|dolc/i.test(x.t)) || {}).k;
     if (!f.lot && fk && /focacc/i.test(nm)) return fk; if (sk && /cannon|cannol|tiramis|biscot/i.test(nm)) return sk; const c = catT()[f.c]; const t = TABS.find((x) => x.r.includes(c)); return t ? t.k : fk || (TABS[0] || {}).k; };
   const tabList = (k) => P.filter((p) => tabOf(p) === k);
@@ -2163,7 +2171,9 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     f.addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; pick(b.dataset.f || null, gridSel, n); });
   };
   function pick(k, gridSel, n) {
-    ONE.f = k; ONE.fo = null; ONE.pk = {}; paintChips();
+    ONE.f = k; ONE.fo = null; ONE.pk = {}; ONE.pl = { sz: -1, w: {} };
+    if (k === PL_TAB.k) { const F = tabMenus(k); if (F.length === 1) ONE.fo = F[0].id; } /* one board: open, ready to compose */
+    paintChips();
     const b = k && $(`#filters [data-f="${k}"]`); if (b) b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
     const g = $(gridSel || '#grid'); if (!g) return; g.classList.add('swap'); setTimeout(() => { renderGrid(gridSel || '#grid', n || 999); g.classList.remove('swap'); }, 160);
   }
@@ -2191,17 +2201,20 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
   const plW = () => Object.keys((ONE.pl && ONE.pl.w) || {}).filter((id) => ONE.pl.w[id] > 0).map((id) => [id, ONE.pl.w[id]]);
   const plPrice = (f) => GGBoutique.plPrice ? GGBoutique.plPrice(G.menu, f, ONE.pl ? ONE.pl.sz : -1, plW()) : 0;
   const plWhat = (f, sz, w) => [(f.sz[sz] || {}).t ? 'Plateau ' + String(f.sz[sz].t).toLowerCase() : '', ...w.map(([id, n]) => ((G.by[id] || {}).t || '') + ' ' + gT(n * ((G.by[id] || {}).kg || { step: 100 }).step))].filter(Boolean).join(', ');
+  /* the products of a board, by rayon (Charcuterie, then Fromages…), in the shop's order */
+  const plGroups = (f) => { const ct = catT(), g = []; f.ids.forEach((id) => { const t = ct[(G.by[id] || {}).c] || 'Au poids', x = g.find((y) => y.t === t); if (x) x.ids.push(id); else g.push({ t, ids: [id] }); });
+    const ord = ((G.menu && G.menu.cats) || []).map((c) => c.t), at = (t) => { const i = ord.indexOf(t); return i < 0 ? 99 : i; }; return g.sort((a, b) => at(a.t) - at(b.t)); };
   function plHtml(f) {
     const open = ONE.fo === f.id, n = G.F.filter((x) => x.fo === f.id).length, st = ONE.pl || { sz: -1, w: {} }, w = plW(), tot = open ? plPrice(f) : 0;
-    const what = f.d || `${f.sz.map((z) => z.t).join(', ')} · ${f.ids.length} charcuteries au poids`;
+    const what = f.d || `${f.sz.map((z) => z.t).join(', ')} · ${f.ids.length} produits au poids`;
     let body = '';
     if (open) { const g = w.reduce((a, [id, k]) => a + k * ((G.by[id] || {}).kg || { step: 100 }).step, 0), ok = st.sz >= 0 && w.length;
       body = `<div class="gg-mn-b gg-pl"><div><span class="gg-fo-t">1 · La taille du plateau</span><div class="gg-pl-sz" role="radiogroup" aria-label="Taille du plateau">${f.sz.map((z, i) => `<button type="button" role="radio" aria-checked="${st.sz === i}" class="${st.sz === i ? 'on' : ''}" data-plz="${i}"><b>${esc(z.t)}</b><span>${z.p > 0 ? '+ ' + eur(z.p) : 'offert'}</span></button>`).join('')}</div></div>
-        <div><span class="gg-fo-t">2 · Vos charcuteries, au poids</span><div class="gg-pl-l">${f.ids.map((id) => { const it = G.by[id] || {}, k = st.w[id] || 0, step = (it.kg || { step: 100 }).step, mx = Math.min(50, left(id));
+        ${plGroups(f).map((gr, gi) => `<div><span class="gg-fo-t">${gi + 2} · ${esc(gr.t)}, au poids</span><div class="gg-pl-l">${gr.ids.map((id) => { const it = G.by[id] || {}, k = st.w[id] || 0, step = (it.kg || { step: 100 }).step, mx = Math.min(50, left(id));
           return `<div class="gg-pl-r${k ? ' on' : ''}"><span><b>${esc(it.t || '')}</b><em>${k ? `${gT(k * step)} · ${eur(k * it.p)}` : `${eur((it.kg || {}).pkg || 0)} le kilo · ${eur(it.p)} les ${gT(step)}`}</em></span>
-            <div class="stepper"><button type="button" data-plw="${esc(id)}" data-d="-1" aria-label="${esc(gT(step))} de moins"${k ? '' : ' disabled'}>−</button><span>${k ? gT(k * step) : '0 g'}</span><button type="button" data-plw="${esc(id)}" data-d="1" aria-label="${esc(gT(step))} de plus"${k < mx ? '' : ' disabled'}>+</button></div></div>`; }).join('')}</div></div>
-        <div class="gg-pl-tot"><div class="gg-pl-sum"><span>${st.sz >= 0 ? `Plateau ${esc(String(f.sz[st.sz].t).toLowerCase())} ${eur(f.sz[st.sz].p)}` : 'Choisissez la taille'}${g ? ` + ${gT(g)} de charcuterie` : ''}</span><b>${eur(tot)}</b></div>
-        <button type="button" class="btn gg-fo-go" data-pladd="${esc(f.id)}"${ok ? '' : ' disabled'}>${ok ? `Ajouter au panier · ${eur(tot)}` : st.sz < 0 ? 'Choisissez la taille du plateau' : 'Ajoutez une charcuterie'}</button></div></div>`; }
+            <div class="stepper"><button type="button" data-plw="${esc(id)}" data-d="-1" aria-label="${esc(gT(step))} de moins"${k ? '' : ' disabled'}>−</button><span>${k ? gT(k * step) : '0 g'}</span><button type="button" data-plw="${esc(id)}" data-d="1" aria-label="${esc(gT(step))} de plus"${k < mx ? '' : ' disabled'}>+</button></div></div>`; }).join('')}</div></div>`).join('')}
+        <div class="gg-pl-tot"><div class="gg-pl-sum"><span>${st.sz >= 0 ? `Plateau ${esc(String(f.sz[st.sz].t).toLowerCase())} ${eur(f.sz[st.sz].p)}` : 'Choisissez la taille'}${g ? ` + ${gT(g)} au poids` : ''}</span><b>${eur(tot)}</b></div>
+        <button type="button" class="btn gg-fo-go" data-pladd="${esc(f.id)}"${ok ? '' : ' disabled'}>${ok ? `Ajouter au panier · ${eur(tot)}` : st.sz < 0 ? 'Choisissez la taille du plateau' : 'Ajoutez un produit au poids'}</button></div></div>`; }
     return `<article class="gg-mn gg-mn-pl${open ? ' open' : ''}" data-mn="${esc(f.id)}"><div class="gg-mn-h" data-mopen="${esc(f.id)}"><span class="gg-mn-ill">${mIll(f)}</span>
       <span class="gg-mn-tx"><small>À composer</small><b>${esc(f.t)}</b><em>${esc(what)}</em>${n ? `<i>${n} au panier</i>` : ''}</span>
       <span class="gg-mn-p"><b>${open && tot ? eur(tot) : 'dès ' + eur(f.p)}</b><button type="button" class="gg-fo-open" aria-expanded="${open}" aria-label="Composer ${esc(f.t)}">${open ? '×' : '+'}</button></span></div>${body}</article>`;
