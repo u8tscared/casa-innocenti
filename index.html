@@ -1795,6 +1795,8 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-mn-p{display:grid;justify-items:end;gap:8px}.gg-mn-p b{font-variant-numeric:tabular-nums;font-size:17px}
 .gg-mn-b{display:grid;gap:14px;padding:14px 0 4px;border-top:1px dashed var(--line);margin-top:14px}.gg-mn.open .gg-fo-open{background:transparent;color:var(--fg)}
 .gg-mn-b .chip[disabled]{opacity:.4}
+/* phone: the page never slides left or right (Marceau 2026-11-22): the width is locked, only the rows of chips scroll sideways */
+html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x:none}.top a{display:block;overflow:hidden;text-overflow:ellipsis}
 /* « Composer son plateau » (Growth Gusto › Boutique › Menus et lots › Nouveau plateau): a size, then each charcuterie by weight, the price as it goes */
 .gg-pl-sz{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}.gg-pl-sz button{display:grid;gap:2px;padding:12px 8px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;cursor:pointer;text-align:center}
 .gg-pl-sz button b{font-family:var(--display,Georgia,serif);font-weight:500;font-size:17px}.gg-pl-sz button span{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
