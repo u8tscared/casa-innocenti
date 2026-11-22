@@ -1803,6 +1803,7 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
 .gg-pl-sz{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}.gg-pl-sz button{display:grid;gap:2px;padding:12px 8px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;cursor:pointer;text-align:center}
 .gg-pl-sz button b{font-family:var(--display,Georgia,serif);font-weight:500;font-size:17px}.gg-pl-sz button span{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
 .gg-pl-sz button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}.gg-pl-sz button.on span{color:inherit;opacity:.8}
+.gg-pl-ph{width:100%;max-height:340px;object-fit:cover;display:block;border:1px solid var(--line)}.gg-mn-pl .gg-mn-ill img{object-fit:cover;mix-blend-mode:normal}
 .gg-pl-l{display:grid}.gg-pl-r{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.gg-pl-r:last-child{border-bottom:0}
 .gg-pl-r>span{display:grid;gap:2px;min-width:0}.gg-pl-r>span em{font-style:normal;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}.gg-pl-r.on>span em{color:var(--fg)}
 .gg-pl-r .stepper span{min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
@@ -2198,9 +2199,13 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     return pk; }
   const mIll = (f) => (f.pl && !f.ph ? illus0(ILLUS.board ? 'board' : 'salame') : f.ph ? `<img class="ill gg-ph" src="${esc(f.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : illus0(illKey(f.lot && f.steps[0] ? (G.by[f.steps[0].ids[0]] || {}).t || f.t : f.t, catT()[f.c] || '') || 'focaccia'));
   /* « Composer son plateau »: ONE.pl = { sz: size index, w: { itemId: slices } }; the price moves with each 100 g, the server prices it again */
+  /* a board weighs by its own slices (f.gs, 50 g), else the product's step; stock (left) in kilos */
+  const plStep = (f, id) => (+f.gs >= 10 ? +f.gs : ((G.by[id] || {}).kg || { step: 100 }).step);
+  const plMax = (f, id) => { const it = G.by[id] || {}; return Math.min(100, it.left == null ? 100 : Math.floor((+it.left * 1000 + 1e-6) / plStep(f, id))); };
+  const plEur = (f, id, k) => { const it = G.by[id] || {}, kg = it.kg || {}; const c = kg.pkg > 0 ? kg.pkg * 100 : it.p * 100 * 1000 / (kg.step || 100); return Math.round(c * k * plStep(f, id) / 1000) / 100; };
   const plW = () => Object.keys((ONE.pl && ONE.pl.w) || {}).filter((id) => ONE.pl.w[id] > 0).map((id) => [id, ONE.pl.w[id]]);
   const plPrice = (f) => GGBoutique.plPrice ? GGBoutique.plPrice(G.menu, f, ONE.pl ? ONE.pl.sz : -1, plW()) : 0;
-  const plWhat = (f, sz, w) => [(f.sz[sz] || {}).t ? 'Plateau ' + String(f.sz[sz].t).toLowerCase() : '', ...w.map(([id, n]) => ((G.by[id] || {}).t || '') + ' ' + gT(n * ((G.by[id] || {}).kg || { step: 100 }).step))].filter(Boolean).join(', ');
+  const plWhat = (f, sz, w) => [(f.sz[sz] || {}).t ? 'Plateau ' + String(f.sz[sz].t).toLowerCase() : '', ...w.map(([id, n]) => ((G.by[id] || {}).t || '') + ' ' + gT(n * plStep(f, id)))].filter(Boolean).join(', ');
   /* the products of a board, by rayon (Charcuterie, then Fromages…), in the shop's order */
   const plGroups = (f) => { const ct = catT(), g = []; f.ids.forEach((id) => { const t = ct[(G.by[id] || {}).c] || 'Au poids', x = g.find((y) => y.t === t); if (x) x.ids.push(id); else g.push({ t, ids: [id] }); });
     const ord = ((G.menu && G.menu.cats) || []).map((c) => c.t), at = (t) => { const i = ord.indexOf(t); return i < 0 ? 99 : i; }; return g.sort((a, b) => at(a.t) - at(b.t)); };
@@ -2208,10 +2213,10 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     const open = ONE.fo === f.id, n = G.F.filter((x) => x.fo === f.id).length, st = ONE.pl || { sz: -1, w: {} }, w = plW(), tot = open ? plPrice(f) : 0;
     const what = f.d || `${f.sz.map((z) => z.t).join(', ')} · ${f.ids.length} produits au poids`;
     let body = '';
-    if (open) { const g = w.reduce((a, [id, k]) => a + k * ((G.by[id] || {}).kg || { step: 100 }).step, 0), ok = st.sz >= 0 && w.length;
-      body = `<div class="gg-mn-b gg-pl"><div><span class="gg-fo-t">1 · La taille du plateau</span><div class="gg-pl-sz" role="radiogroup" aria-label="Taille du plateau">${f.sz.map((z, i) => `<button type="button" role="radio" aria-checked="${st.sz === i}" class="${st.sz === i ? 'on' : ''}" data-plz="${i}"><b>${esc(z.t)}</b><span>${z.p > 0 ? '+ ' + eur(z.p) : 'offert'}</span></button>`).join('')}</div></div>
-        ${plGroups(f).map((gr, gi) => `<div><span class="gg-fo-t">${gi + 2} · ${esc(gr.t)}, au poids</span><div class="gg-pl-l">${gr.ids.map((id) => { const it = G.by[id] || {}, k = st.w[id] || 0, step = (it.kg || { step: 100 }).step, mx = Math.min(50, left(id));
-          return `<div class="gg-pl-r${k ? ' on' : ''}"><span><b>${esc(it.t || '')}</b><em>${k ? `${gT(k * step)} · ${eur(k * it.p)}` : `${eur((it.kg || {}).pkg || 0)} le kilo · ${eur(it.p)} les ${gT(step)}`}</em></span>
+    if (open) { const g = w.reduce((a, [id, k]) => a + k * plStep(f, id), 0), ok = st.sz >= 0 && w.length;
+      body = `<div class="gg-mn-b gg-pl">${f.ph ? `<img class="gg-pl-ph" src="${esc(f.ph)}" alt="${esc(f.t)}" loading="lazy" referrerpolicy="no-referrer">` : ''}<div><span class="gg-fo-t">1 · La taille du plateau</span><div class="gg-pl-sz" role="radiogroup" aria-label="Taille du plateau">${f.sz.map((z, i) => `<button type="button" role="radio" aria-checked="${st.sz === i}" class="${st.sz === i ? 'on' : ''}" data-plz="${i}"><b>${esc(z.t)}</b><span>${z.p > 0 ? '+ ' + eur(z.p) : 'offert'}</span></button>`).join('')}</div></div>
+        ${plGroups(f).map((gr, gi) => `<div><span class="gg-fo-t">${gi + 2} · ${esc(gr.t)}, au poids</span><div class="gg-pl-l">${gr.ids.map((id) => { const it = G.by[id] || {}, k = st.w[id] || 0, step = plStep(f, id), mx = plMax(f, id);
+          return `<div class="gg-pl-r${k ? ' on' : ''}"><span><b>${esc(it.t || '')}</b><em>${k ? `${gT(k * step)} · ${eur(plEur(f, id, k))}` : `${eur((it.kg || {}).pkg || 0)} le kilo · ${eur(plEur(f, id, 1))} les ${gT(step)}`}</em></span>
             <div class="stepper"><button type="button" data-plw="${esc(id)}" data-d="-1" aria-label="${esc(gT(step))} de moins"${k ? '' : ' disabled'}>−</button><span>${k ? gT(k * step) : '0 g'}</span><button type="button" data-plw="${esc(id)}" data-d="1" aria-label="${esc(gT(step))} de plus"${k < mx ? '' : ' disabled'}>+</button></div></div>`; }).join('')}</div></div>`).join('')}
         <div class="gg-pl-tot"><div class="gg-pl-sum"><span>${st.sz >= 0 ? `Plateau ${esc(String(f.sz[st.sz].t).toLowerCase())} ${eur(f.sz[st.sz].p)}` : 'Choisissez la taille'}${g ? ` + ${gT(g)} au poids` : ''}</span><b>${eur(tot)}</b></div>
         <button type="button" class="btn gg-fo-go" data-pladd="${esc(f.id)}"${ok ? '' : ' disabled'}>${ok ? `Ajouter au panier · ${eur(tot)}` : st.sz < 0 ? 'Choisissez la taille du plateau' : 'Ajoutez un produit au poids'}</button></div></div>`; }
@@ -2241,7 +2246,7 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     const f = F.find((y) => y.id === ONE.fo); if (!f || !t.closest('.gg-mn-b')) return;
     if (f.pl) { const st = ONE.pl = ONE.pl || { sz: -1, w: {} };
       const z = t.closest('[data-plz]'); if (z) { st.sz = +z.dataset.plz; mRepaint(f.id); return; }
-      const wq = t.closest('[data-plw]'); if (wq) { const id = wq.dataset.plw; st.w[id] = Math.max(0, Math.min(50, left(id), (st.w[id] || 0) + +wq.dataset.d)); mRepaint(f.id); return; }
+      const wq = t.closest('[data-plw]'); if (wq) { const id = wq.dataset.plw; st.w[id] = Math.max(0, Math.min(plMax(f, id), (st.w[id] || 0) + +wq.dataset.d)); mRepaint(f.id); return; }
       const pa = t.closest('[data-pladd]'); if (pa) { const w = plW(); if (st.sz < 0 || !w.length) return;
         G.F.push({ fo: f.id, sz: st.sz, w, t: f.t, p: plPrice(f), what: plWhat(f, st.sz, w) });
         ONE.fo = null; ONE.pl = { sz: -1, w: {} }; mRepaint(f.id); renderCart(); if (typeof fly === 'function') try { fly(pa); } catch (er) {} if (typeof toast === 'function') toast(f.t); }
