@@ -27,7 +27,7 @@ sub('<section class="hero" id="hero">','<div class="marq" aria-hidden="true">','
     <div class="orbit" id="orbit"></div>
     <div class="orb-core" aria-hidden="true"><svg viewBox="0 0 200 200"><defs><path id="corec" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs><text fill="currentColor" font-size="15" font-family="Jost,sans-serif"><textPath href="#corec" textLength="484">CASA INNOCENTI · EPICERIA FINE ITALIANA · SAINT-PRIEST ·</textPath></text></svg><b>CI</b></div>
     <div class="wrap hero-txt">
-      <div class="eyebrow h-in">Casa Innocenti · 30 Grande Rue, Saint-Priest</div>
+      <div class="eyebrow h-in">Casa Innocenti · 32 Grande Rue, Saint-Priest</div>
       <h1><span class="l"><span>L’épicerie italienne</span></span><span class="l"><span><em>de Saint-Priest.</em></span></span></h1>
       <p class="lead h-in">Charcuterie tranchée à la commande, fromages, pâtes fraîches maison et épicerie fine. Commandez en ligne, c’est prêt en boutique en 2 heures.</p>
       <div class="btns h-in"><a class="btn" href="#boutique">Faire mes courses <span>→</span></a><a class="btn ghost" href="#emporter">Commander à emporter</a></div>
