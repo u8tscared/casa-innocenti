@@ -1800,7 +1800,18 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-mn-tx b{font-family:var(--display,Georgia,serif);font-size:21px;font-weight:500;line-height:1.15}.gg-mn-tx em{font-style:normal;color:var(--mute);font-size:14px}.gg-mn-tx i{font-style:normal;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--verde,#2E9E5B)}
 .gg-mn-p{display:grid;justify-items:end;gap:8px}.gg-mn-p b{font-variant-numeric:tabular-nums;font-size:17px}
 .gg-mn-b{display:grid;gap:14px;padding:14px 0 4px;border-top:1px dashed var(--line);margin-top:14px}.gg-mn.open .gg-fo-open{background:transparent;color:var(--fg)}
-.gg-mn-b .chip[disabled]{opacity:.4}.gg-mline .qty button{width:auto;padding:0 10px;font-size:12px}
+.gg-mn-b .chip[disabled]{opacity:.4}
+/* « Composer son plateau » (Growth Gusto › Boutique › Menus et lots › Nouveau plateau): a size, then each charcuterie by weight, the price as it goes */
+.gg-pl-sz{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}.gg-pl-sz button{display:grid;gap:2px;padding:12px 8px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;cursor:pointer;text-align:center}
+.gg-pl-sz button b{font-family:var(--display,Georgia,serif);font-weight:500;font-size:17px}.gg-pl-sz button span{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.gg-pl-sz button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}.gg-pl-sz button.on span{color:inherit;opacity:.8}
+.gg-pl-l{display:grid}.gg-pl-r{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.gg-pl-r:last-child{border-bottom:0}
+.gg-pl-r>span{display:grid;gap:2px;min-width:0}.gg-pl-r>span em{font-style:normal;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}.gg-pl-r.on>span em{color:var(--fg)}
+.gg-pl-r .stepper span{min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
+.gg-pl-tot{position:sticky;bottom:0;display:grid;gap:10px;padding:12px 0 4px;background:var(--paper,var(--bg));border-top:1px dashed var(--line)}
+.gg-pl-sum{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}.gg-pl-sum b{color:var(--fg);font-size:20px;font-family:var(--display,Georgia,serif);font-weight:500}
+@media (max-width:900px){.gg-pl-tot{bottom:calc(62px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:520px){.gg-pl-sz{grid-template-columns:repeat(3,1fr)}.gg-pl-sz button{padding:10px 4px}.gg-pl-sz button b{font-size:15px}}.gg-mline .qty button{width:auto;padding:0 10px;font-size:12px}
 #filters .chip.gg-midi{border-color:var(--rosso,#B3262E)}#filters .chip.gg-midi:not(.on){color:var(--rosso,#B3262E)}
 @media (max-width:760px){[data-page="accueil"] #shop{padding-top:14px}#shop .sh .ph{font-size:38px;line-height:1.02;margin-top:8px}#shop .sh .eyebrow{font-size:11px;letter-spacing:.14em}#shop .gg-lead{font-size:15px;margin-top:8px}#shop .sh{margin-bottom:4px;gap:6px}}
 @media (max-width:520px){.gg-mn{padding:12px}.gg-mn-h{grid-template-columns:60px 1fr auto;gap:10px}.gg-mn-ill{width:60px;height:60px}.gg-mn-tx b{font-size:18px}}
@@ -1958,7 +1969,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
       if (!G.slot) { er.textContent = 'Choisissez une heure de retrait.'; return; }
       b.disabled = true; b.textContent = 'Envoi…'; er.textContent = '';
       try {
-        const r = await GGBoutique.order(rid, { items: [...G.F.map((x) => ({ fo: x.fo, q: 1, pk: x.pk })), ...items.map((x) => ({ id: x.it.id, q: x.q }))], name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
+        const r = await GGBoutique.order(rid, { items: [...G.F.map((x) => (x.w ? { fo: x.fo, q: 1, sz: x.sz, w: x.w } : { fo: x.fo, q: 1, pk: x.pk })), ...items.map((x) => ({ id: x.it.id, q: x.q }))], name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
         G.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...G.order, at: Date.now() })); } catch (e) {}
         Object.keys(cart).forEach((k) => cart[k] = 0); G.F = []; renderCart(); if (G.menu) renderGrid('#grid', 999);
@@ -2002,7 +2013,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     }
     paintMenu(); paintSlots(); refresh();
     function paintMenu() {
-      const L = midiItems(), menu = $('.as-menu', box), F = G.menu.menus || [];
+      const L = midiItems(), menu = $('.as-menu', box), F = (G.menu.menus || []).filter((f) => !f.pl);
       Object.keys(E.q).forEach((k) => { if (!G.by[k]) delete E.q[k]; }); E.f = E.f.filter((x) => F.some((f) => f.id === x.fo));
       menu.innerHTML = (F.length ? F.map(foHtml).join('') : '') + (L.length ? L.map((it) => { const n = E.q[it.id] || 0, out = left(it.id) <= 0;
         return `<article class="as-item${n ? ' on' : ''}${out ? ' gg-out' : ''}" data-id="${esc(it.id)}"><div class="as-ill">${illus(it.id)}</div>
@@ -2169,8 +2180,28 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   function mPk(f) { const pk = [], g = mGroups(f); for (let gi = 0; gi < g.length; gi++) { const v = ONE.pk[gi];
     if (g[gi].idx.length === 1) { if (!v) return null; pk.push(v); } else { const L = []; Object.keys(v || {}).forEach((id) => { for (let i = 0; i < v[id]; i++) L.push(id); }); if (L.length !== g[gi].idx.length) return null; pk.push(...L); } }
     return pk; }
-  const mIll = (f) => (f.ph ? `<img class="ill gg-ph" src="${esc(f.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : illus0(illKey(f.lot && f.steps[0] ? (G.by[f.steps[0].ids[0]] || {}).t || f.t : f.t, catT()[f.c] || '') || 'focaccia'));
+  const mIll = (f) => (f.pl && !f.ph ? illus0(ILLUS.board ? 'board' : 'salame') : f.ph ? `<img class="ill gg-ph" src="${esc(f.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : illus0(illKey(f.lot && f.steps[0] ? (G.by[f.steps[0].ids[0]] || {}).t || f.t : f.t, catT()[f.c] || '') || 'focaccia'));
+  /* « Composer son plateau »: ONE.pl = { sz: size index, w: { itemId: slices } }; the price moves with each 100 g, the server prices it again */
+  const plW = () => Object.keys((ONE.pl && ONE.pl.w) || {}).filter((id) => ONE.pl.w[id] > 0).map((id) => [id, ONE.pl.w[id]]);
+  const plPrice = (f) => GGBoutique.plPrice ? GGBoutique.plPrice(G.menu, f, ONE.pl ? ONE.pl.sz : -1, plW()) : 0;
+  const plWhat = (f, sz, w) => [(f.sz[sz] || {}).t ? 'Plateau ' + String(f.sz[sz].t).toLowerCase() : '', ...w.map(([id, n]) => ((G.by[id] || {}).t || '') + ' ' + gT(n * ((G.by[id] || {}).kg || { step: 100 }).step))].filter(Boolean).join(', ');
+  function plHtml(f) {
+    const open = ONE.fo === f.id, n = G.F.filter((x) => x.fo === f.id).length, st = ONE.pl || { sz: -1, w: {} }, w = plW(), tot = open ? plPrice(f) : 0;
+    const what = f.d || `${f.sz.map((z) => z.t).join(', ')} · ${f.ids.length} charcuteries au poids`;
+    let body = '';
+    if (open) { const g = w.reduce((a, [id, k]) => a + k * ((G.by[id] || {}).kg || { step: 100 }).step, 0), ok = st.sz >= 0 && w.length;
+      body = `<div class="gg-mn-b gg-pl"><div><span class="gg-fo-t">1 · La taille du plateau</span><div class="gg-pl-sz" role="radiogroup" aria-label="Taille du plateau">${f.sz.map((z, i) => `<button type="button" role="radio" aria-checked="${st.sz === i}" class="${st.sz === i ? 'on' : ''}" data-plz="${i}"><b>${esc(z.t)}</b><span>${z.p > 0 ? '+ ' + eur(z.p) : 'offert'}</span></button>`).join('')}</div></div>
+        <div><span class="gg-fo-t">2 · Vos charcuteries, au poids</span><div class="gg-pl-l">${f.ids.map((id) => { const it = G.by[id] || {}, k = st.w[id] || 0, step = (it.kg || { step: 100 }).step, mx = Math.min(50, left(id));
+          return `<div class="gg-pl-r${k ? ' on' : ''}"><span><b>${esc(it.t || '')}</b><em>${k ? `${gT(k * step)} · ${eur(k * it.p)}` : `${eur((it.kg || {}).pkg || 0)} le kilo · ${eur(it.p)} les ${gT(step)}`}</em></span>
+            <div class="stepper"><button type="button" data-plw="${esc(id)}" data-d="-1" aria-label="${esc(gT(step))} de moins"${k ? '' : ' disabled'}>−</button><span>${k ? gT(k * step) : '0 g'}</span><button type="button" data-plw="${esc(id)}" data-d="1" aria-label="${esc(gT(step))} de plus"${k < mx ? '' : ' disabled'}>+</button></div></div>`; }).join('')}</div></div>
+        <div class="gg-pl-tot"><div class="gg-pl-sum"><span>${st.sz >= 0 ? `Plateau ${esc(String(f.sz[st.sz].t).toLowerCase())} ${eur(f.sz[st.sz].p)}` : 'Choisissez la taille'}${g ? ` + ${gT(g)} de charcuterie` : ''}</span><b>${eur(tot)}</b></div>
+        <button type="button" class="btn gg-fo-go" data-pladd="${esc(f.id)}"${ok ? '' : ' disabled'}>${ok ? `Ajouter au panier · ${eur(tot)}` : st.sz < 0 ? 'Choisissez la taille du plateau' : 'Ajoutez une charcuterie'}</button></div></div>`; }
+    return `<article class="gg-mn gg-mn-pl${open ? ' open' : ''}" data-mn="${esc(f.id)}"><div class="gg-mn-h" data-mopen="${esc(f.id)}"><span class="gg-mn-ill">${mIll(f)}</span>
+      <span class="gg-mn-tx"><small>À composer</small><b>${esc(f.t)}</b><em>${esc(what)}</em>${n ? `<i>${n} au panier</i>` : ''}</span>
+      <span class="gg-mn-p"><b>${open && tot ? eur(tot) : 'dès ' + eur(f.p)}</b><button type="button" class="gg-fo-open" aria-expanded="${open}" aria-label="Composer ${esc(f.t)}">${open ? '×' : '+'}</button></span></div>${body}</article>`;
+  }
   function mnHtml(f) {
+    if (f.pl) return plHtml(f);
     const open = ONE.fo === f.id, n = G.F.filter((x) => x.fo === f.id).length, pk = open && mPk(f);
     const what = f.d || mGroups(f).map((g) => (g.idx.length > 1 ? g.idx.length + ' × ' : '') + g.t).join(' + ');
     let body = '';
@@ -2187,8 +2218,15 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   document.addEventListener('click', (e) => {
     const t = e.target, F = (G.menu && G.menu.menus) || [];
     const x = t.closest('[data-ggfx]'); if (x) { const r = G.F.splice(+x.dataset.ggfx, 1)[0]; renderCart(); if (r) mRepaint(r.fo); return; }
-    const op = t.closest('[data-mopen]'); if (op) { const was = ONE.fo; ONE.fo = was === op.dataset.mopen ? null : op.dataset.mopen; ONE.pk = {}; if (was && was !== ONE.fo) mRepaint(was); mRepaint(op.dataset.mopen); return; }
+    const op = t.closest('[data-mopen]'); if (op) { const was = ONE.fo; ONE.fo = was === op.dataset.mopen ? null : op.dataset.mopen; ONE.pk = {}; ONE.pl = { sz: -1, w: {} }; if (was && was !== ONE.fo) mRepaint(was); mRepaint(op.dataset.mopen); return; }
     const f = F.find((y) => y.id === ONE.fo); if (!f || !t.closest('.gg-mn-b')) return;
+    if (f.pl) { const st = ONE.pl = ONE.pl || { sz: -1, w: {} };
+      const z = t.closest('[data-plz]'); if (z) { st.sz = +z.dataset.plz; mRepaint(f.id); return; }
+      const wq = t.closest('[data-plw]'); if (wq) { const id = wq.dataset.plw; st.w[id] = Math.max(0, Math.min(50, left(id), (st.w[id] || 0) + +wq.dataset.d)); mRepaint(f.id); return; }
+      const pa = t.closest('[data-pladd]'); if (pa) { const w = plW(); if (st.sz < 0 || !w.length) return;
+        G.F.push({ fo: f.id, sz: st.sz, w, t: f.t, p: plPrice(f), what: plWhat(f, st.sz, w) });
+        ONE.fo = null; ONE.pl = { sz: -1, w: {} }; mRepaint(f.id); renderCart(); if (typeof fly === 'function') try { fly(pa); } catch (er) {} if (typeof toast === 'function') toast(f.t); }
+      return; }
     const c = t.closest('[data-mi]'); if (c) { ONE.pk[+c.dataset.mg] = c.dataset.mi; mRepaint(f.id); return; }
     const k = t.closest('[data-mc]'); if (k) { const gi = +k.dataset.mg, m = (ONE.pk[gi] = ONE.pk[gi] || {}); m[k.dataset.mc] = Math.max(0, (m[k.dataset.mc] || 0) + +k.dataset.d); mRepaint(f.id); return; }
     const a = t.closest('[data-madd]'); if (a) { const pk = mPk(f); if (!pk) return;
