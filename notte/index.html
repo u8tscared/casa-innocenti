@@ -1740,6 +1740,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 .gg-days{margin-bottom:10px}.gg-slots button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .gg-ph{width:100%;height:100%;object-fit:cover;display:block}.gg-ini{display:grid!important;place-items:center;width:100%;height:100%;font:600 42px/1 Georgia,serif;font-style:italic;color:var(--fg);opacity:.55}
 .gg-none{color:var(--mute)}.gg-none a{text-decoration:underline}.gg-paye{margin:6px 0 0;font-size:14px;color:var(--mute)}.as-item.gg-out{opacity:.55}#asporto .gg-wait{display:flex;gap:8px;align-items:center;color:var(--mute)}.gg-err{color:var(--rosso,#B3262E);font-size:14px;min-height:1.2em}
+.co-nav .btn{white-space:nowrap}@media(max-width:900px){.co-side{max-height:24vh}.co.gg-sent .co-side{display:none}.co-bar li{letter-spacing:.04em;white-space:nowrap}.co-nav .btn{padding-left:16px;padding-right:16px;letter-spacing:.08em}.co-nav .btn.ghost{flex:0 0 auto}}
 .gg-st{display:grid;gap:10px;justify-items:start}.gg-st .stamp{transform:rotate(-6deg)}.gg-st .gg-wait{display:flex;gap:10px;align-items:center;color:var(--mute)}
 .gg-dots{display:inline-flex;gap:4px}.gg-dots i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:ggd 1.2s infinite}.gg-dots i:nth-child(2){animation-delay:.15s}.gg-dots i:nth-child(3){animation-delay:.3s}
 @keyframes ggd{0%,80%,100%{opacity:.25}40%{opacity:1}}@media(prefers-reduced-motion:reduce){.gg-dots i{animation:none}}`;
@@ -1935,10 +1936,12 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
   }
   function chime() { try { const A = new (window.AudioContext || window.webkitAudioContext)(); [660, 880].forEach((f, i) => { const o = A.createOscillator(), g = A.createGain(); o.frequency.value = f; g.gain.setValueAtTime(.0001, A.currentTime + i * .18); g.gain.exponentialRampToValueAtTime(.12, A.currentTime + i * .18 + .02); g.gain.exponentialRampToValueAtTime(.0001, A.currentTime + i * .18 + .5); o.connect(g).connect(A.destination); o.start(A.currentTime + i * .18); o.stop(A.currentTime + i * .18 + .55); }); } catch (e) {} }
 
+  const ggRq = () => { const a = new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a, (x) => x.toString(16).padStart(2, '0')).join(''); };
   /* ───────── checkout: today's pickup times, pay in the shop, the shop confirms ───────── */
   function checkout() {
     const co = $('#checkout'); if (!co) return;
-    const bar = $$('.co-bar li', co); if (bar[3]) bar[3].textContent = 'Envoi';
+    const bar = $$('.co-bar li', co); if (bar[2]) bar[2].textContent = 'Contact'; if (bar[3]) bar[3].textContent = 'Envoi';
+    const dn = $('.drawer .note'); if (dn) dn.textContent = 'Vous payez en boutique au retrait, par carte ou en espèces'; /* no card online on this site */
     const steps = $$('.co-step', co);
     const mode = $$('.co-mode', co); if (mode[1]) mode[1].hidden = true;
     if (mode[0]) mode[0].querySelector('span').textContent = '32 Grande Rue · gratuit · paiement sur place';
@@ -1969,16 +1972,21 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
       if (items.some((x) => !x.it)) { er.textContent = 'Un produit du panier n’est pas encore en vente en ligne. Retirez-le, ou appelez la boutique.'; return; }
       if (fn.length < 2 || tel.replace(/\D/g, '').length < 8) { er.textContent = 'Indiquez votre prénom et votre téléphone (étape Coordonnées).'; return; }
       if (!G.slot) { er.textContent = 'Choisissez une heure de retrait.'; return; }
-      b.disabled = true; b.textContent = 'Envoi…'; er.textContent = '';
+      if (G.sending) return; G.sending = true; b.disabled = true; b.textContent = 'Envoi…'; er.textContent = '';
+      G.rq = G.rq || ggRq(); /* the same request id if the client taps again after a lost answer: the server never makes a second order */
       try {
-        const r = await GGBoutique.order(rid, { items: [...G.F.map((x) => (x.w ? { fo: x.fo, q: 1, sz: x.sz, w: x.w } : { fo: x.fo, q: 1, pk: x.pk })), ...items.map((x) => ({ id: x.it.id, q: x.q }))], name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
+        const r = await GGBoutique.order(rid, { rq: G.rq, items: [...G.F.map((x) => (x.w ? { fo: x.fo, q: 1, sz: x.sz, w: x.w } : { fo: x.fo, q: 1, pk: x.pk })), ...items.map((x) => ({ id: x.it.id, q: x.q }))], name: (fn + ' ' + ln.slice(0, 1)).trim() + (ln ? '.' : ''), phone: tel, email: mail, slot: G.slot, day: G.day });
         G.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...G.order, at: Date.now() })); } catch (e) {}
         Object.keys(cart).forEach((k) => cart[k] = 0); G.F = []; renderCart(); if (G.menu) renderGrid('#grid', 999);
         steps.forEach((s, i) => s.hidden = i !== 4); $$('.co-bar li', co).forEach((l) => l.classList.add('on'));
-        paintOk(r.order || {}); poll();
-      } catch (e) { b.disabled = false; b.textContent = 'Envoyer la commande'; er.textContent = GGBoutique.say(e); if (/plat|prix/.test(e.message)) load(); }
+        G.rq = ''; co.classList.add('gg-sent'); paintOk(r.order || {}); poll();
+      } catch (e) { er.textContent = GGBoutique.say(e); if (/plat|prix/.test(e.message)) { G.rq = ''; load(); } }
+      finally { G.sending = false; sendReset(); }
     }
+    /* the send button is ready again each time the checkout opens (a second order after the first, Marceau 2026-11-22: it stayed on « Envoi… ») */
+    function sendReset() { const b = $('#gg-send'); if (b && !G.sending) { b.disabled = false; b.textContent = 'Envoyer la commande'; } }
+    document.addEventListener('click', (e) => { if (e.target.closest('.drawer .pay, [data-back]')) { sendReset(); if (e.target.closest('.drawer .pay')) { const er = $('#gg-err'); if (er) er.textContent = ''; co.classList.toggle('gg-sent', false); } } }, true);
     function paintOk(o) {
       if (!ok) return; const st = o.status || G.order.st;
       const H = stH(o, st);
@@ -2071,14 +2079,16 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
       const btn = $('#as-go', box); if (btn.disabled) return;
       const ids = Object.keys(E.q).filter((k) => E.q[k] > 0 && G.by[k]); let er = $('#gg-as-err', box);
       if (!er) { btn.insertAdjacentHTML('beforebegin', '<p class="gg-err" id="gg-as-err" role="alert"></p>'); er = $('#gg-as-err', box); }
-      btn.disabled = true; btn.querySelector('span').textContent = 'Envoi…'; er.textContent = '';
+      if (E.sending) return; E.sending = true; btn.disabled = true; btn.querySelector('span').textContent = 'Envoi…'; er.textContent = '';
+      E.rq = E.rq || ggRq();
       try {
-        const r = await GGBoutique.order(rid, { items: [...E.f.map((x) => ({ fo: x.fo, q: 1, pk: x.pk })), ...ids.map((k) => ({ id: k, q: E.q[k] }))], name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot, day: E.day });
+        const r = await GGBoutique.order(rid, { rq: E.rq, items: [...E.f.map((x) => ({ fo: x.fo, q: 1, pk: x.pk })), ...ids.map((k) => ({ id: k, q: E.q[k] }))], name: $('#as-name', box).value.trim(), phone: $('#as-tel', box).value.trim(), slot: E.slot, day: E.day });
         E.order = { oid: r.oid, k: r.k, track: r.track, st: (r.order && r.order.status) || 'demande', n: r.order && r.order.n };
         try { localStorage.setItem('ci-gg-order', JSON.stringify({ ...E.order, at: Date.now() })); } catch (e) {}
-        E.f = []; $('.ticket', box).classList.add('done'); paintOk(r.order || {}); poll();
+        E.f = []; E.rq = ''; $('.ticket', box).classList.add('done'); paintOk(r.order || {}); poll();
         if (window.gsap) gsap.from('#asporto .tk-done .stamp', { scale: 3, rotate: -40, opacity: 0, duration: .6, ease: 'back.out(2.2)' });
-      } catch (e) { er.textContent = GGBoutique.say(e); refresh(); if (/plat|prix/.test(e.message)) load(); }
+      } catch (e) { er.textContent = GGBoutique.say(e); if (/plat|prix/.test(e.message)) { E.rq = ''; load(); } }
+      finally { E.sending = false; refresh(); }
     }
     function paintOk(o) {
       const st = o.status || E.order.st, H = stH(o, st);
