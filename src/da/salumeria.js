@@ -89,7 +89,7 @@ const CI = (() => {
     e.preventDefault(); if (btn.disabled) return;
     const t = box.querySelector('.ticket'), r = CI.ref();
     t.classList.add('done');
-    box.querySelector('.tk-done').innerHTML = `<div class="stamp">Pronto !</div><p class="tk-ref">Commande <b>${r}</b></p><p>Retrait <b>${CI.fmt(sel)}</b><br>Casa Innocenti, 30 Grande Rue</p><p class="tk-small">${box.querySelector('[name=paye]:checked').value === 'ligne' ? 'Payé en ligne (démo)' : 'À régler sur place'} · un SMS de rappel vous est envoyé 30 min avant.</p><button type="button" class="btn ghost" id="as-new">Nouvelle commande</button>`;
+    box.querySelector('.tk-done').innerHTML = `<div class="stamp">Pronto !</div><p class="tk-ref">Commande <b>${r}</b></p><p>Retrait <b>${CI.fmt(sel)}</b><br>Casa Innocenti, 32 Grande Rue</p><p class="tk-small">${box.querySelector('[name=paye]:checked').value === 'ligne' ? 'Payé en ligne (démo)' : 'À régler sur place'} · un SMS de rappel vous est envoyé 30 min avant.</p><button type="button" class="btn ghost" id="as-new">Nouvelle commande</button>`;
     if (window.gsap) { gsap.from('.tk-done .stamp', {scale:3, rotate:-40, opacity:0, duration:.6, ease:'back.out(2.2)'}); gsap.from('.tk-done p,.tk-done button', {y:12, opacity:0, stagger:.08, delay:.3}); }
   });
   box.addEventListener('click', e => { if (e.target.id === 'as-new') { box.querySelector('.ticket').classList.remove('done'); Object.keys(q).forEach(k => q[k] = 0); box.querySelectorAll('.as-item').forEach(it => { it.classList.remove('on'); it.querySelector('.stepper span').textContent = 0; }); refresh(); } });

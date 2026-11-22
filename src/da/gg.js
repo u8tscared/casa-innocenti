@@ -33,7 +33,8 @@
 
   function css() {
     const s = document.createElement('style');
-    s.textContent = `.gg-stk{display:inline-block;margin-left:6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--rosso,#B3262E)}
+    s.textContent = `.gg-stk.ok{color:var(--verde,#2E7D4F)}
+.gg-stk{display:inline-block;margin-left:6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--rosso,#B3262E)}
 .prod.gg-out{opacity:.55}.prod.gg-out .add,.prod.gg-out .quick{pointer-events:none;opacity:.4}
 html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,html.co-open body{overflow:hidden;overscroll-behavior:none}html.qv-open body,html.co-open body,html.cart-open body{touch-action:none}.drawer,.qv-panel,.co-panel,.co-panel *,.drawer *,.qv-panel *{touch-action:pan-y;overscroll-behavior:contain}
 .gg-live{display:flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}.gg-live i{width:7px;height:7px;border-radius:50%;background:var(--verde,#2E9E5B);box-shadow:0 0 0 4px color-mix(in srgb,var(--verde,#2E9E5B) 20%,transparent)}
@@ -154,13 +155,18 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     const it = G.by[id]; if (!it) return illus0.apply(this, arguments);
     return it.ph ? `<img class="ill gg-ph" src="${esc(it.ph)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : illus0(illKey(it.t, catT()[it.c]));
   };
-  /* stock on the cards: « Plus que 2 », « Épuisé » */
+  /* stock on the cards: « Il en reste 7 » on every product (Growth Gusto › Boutique › Réglages « Montrer le stock restant »),
+     else « Plus que 2 » when few are left; « Épuisé »; by weight « Il reste 1,4 kg » */
+  const stkLow = (it) => !it.kg && it.left != null && +it.left <= 3;
+  const stkTxt = (it) => { if (it.out || it.left == null || !(+it.left > 0)) return '';
+    if (G.menu && G.menu.showLeft === 2) return it.kg ? `Il reste ${gT(Math.round(+it.left * 1000))}` : +it.left === 1 ? 'Dernier en stock' : `Il en reste ${+it.left}`;
+    return it.few ? (+it.left === 1 ? 'Dernier' : 'Plus que ' + it.left) : ''; };
   const card0 = card;
   card = function (p, i) { // eslint-disable-line no-global-assign
     let h = card0(p, i).replace(/<p class="prod-desc"> · /, '<p class="prod-desc">').replace(/ · <\/p>/, '</p>'); const it = p.gg; if (!it) return h;
     if (it.ph) h = h.replace('class="prod rv"', 'class="prod rv gg-hp"');
     if (it.out || it.left === 0) h = h.replace('class="prod rv', 'class="prod rv gg-out').replace('<span class="prod-price">', '<span class="prod-price"><span class="gg-stk">Épuisé</span> ');
-    else if (it.few && it.left != null) h = h.replace(`${p.d} · ${p.w}</p>`, `${p.d} · ${p.w}<span class="gg-stk">${it.left === 1 ? 'Dernier' : 'Plus que ' + it.left}</span></p>`);
+    else if (stkTxt(it)) h = h.replace(`${p.d} · ${p.w}</p>`, `${p.d} · ${p.w}<span class="gg-stk${stkLow(it) ? '' : ' ok'}">${stkTxt(it)}</span></p>`);
     return h;
   };
   /* sold by weight: the cart shows the grams (300 g), not a count of slices */
@@ -205,15 +211,15 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     if (!gItem(k)) { if ((window.PA || []).some((x) => x.id === k && !/^ag-/.test(x.id))) return;
       /* an example product of the site (decor) that is not sold online: show the shop instead of adding it */
       e.stopImmediatePropagation(); e.preventDefault(); const sh = $('#grid'); if (sh) sh.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-    if ((cart[k] || 0) >= left(k)) { e.stopImmediatePropagation(); e.preventDefault(); const t = $('#toast'); if (t) { t.textContent = left(k) ? `Plus que ${left(k)} en stock` : 'Épuisé pour aujourd’hui'; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); } }
+    if ((cart[k] || 0) >= left(k)) { e.stopImmediatePropagation(); e.preventDefault(); const t = $('#toast'); if (t) { const gi = gItem(k); t.textContent = left(k) ? `Plus que ${gi && gi.kg ? gT(left(k) * gi.kg.step) : left(k)} en stock` : 'Épuisé pour aujourd’hui'; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); } }
   }, true);
 
   /* what the client reads for each status of the order (cart checkout and À emporter ticket) */
   function stH(o, st) {
     return { demande: ['Grazie !', 'Demande envoyée', 'Casa Innocenti vérifie que tout est là et vous confirme l’heure. Gardez cette page ouverte : elle change toute seule.'],
-      nouvelle: ['Va bene !', `C’est accepté${o.okSlot ? ` : prête à ${hmFr(o.okSlot)}` : ''}`, o.okMsg ? `« ${o.okMsg} »` : 'On prépare votre commande. À tout à l’heure, 30 Grande Rue.'],
+      nouvelle: ['Va bene !', `C’est accepté${o.okSlot ? ` : prête à ${hmFr(o.okSlot)}` : ''}`, o.okMsg ? `« ${o.okMsg} »` : 'On prépare votre commande. À tout à l’heure, 32 Grande Rue.'],
       prep: ['In corso', `En préparation${o.okSlot ? ` · prête à ${hmFr(o.okSlot)}` : ''}`, 'On s’en occupe.'],
-      prete: ['Pronto !', 'Votre commande est prête', 'Elle vous attend en boutique, 30 Grande Rue.'], servie: ['Grazie !', 'Bonne dégustation', 'Merci pour votre commande.'],
+      prete: ['Pronto !', 'Votre commande est prête', 'Elle vous attend en boutique, 32 Grande Rue.'], servie: ['Grazie !', 'Bonne dégustation', 'Merci pour votre commande.'],
       annulee: ['Mi dispiace', 'Pas possible cette fois', o.why ? `« ${o.why} »` : 'La boutique ne peut pas préparer cette commande. Appelez le 09 63 67 76 39.'] }[st] || ['Grazie !', 'Commande envoyée', ''];
   }
   function chime() { try { const A = new (window.AudioContext || window.webkitAudioContext)(); [660, 880].forEach((f, i) => { const o = A.createOscillator(), g = A.createGain(); o.frequency.value = f; g.gain.setValueAtTime(.0001, A.currentTime + i * .18); g.gain.exponentialRampToValueAtTime(.12, A.currentTime + i * .18 + .02); g.gain.exponentialRampToValueAtTime(.0001, A.currentTime + i * .18 + .5); o.connect(g).connect(A.destination); o.start(A.currentTime + i * .18); o.stop(A.currentTime + i * .18 + .55); }); } catch (e) {} }
@@ -224,7 +230,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     const bar = $$('.co-bar li', co); if (bar[3]) bar[3].textContent = 'Envoi';
     const steps = $$('.co-step', co);
     const mode = $$('.co-mode', co); if (mode[1]) mode[1].hidden = true;
-    if (mode[0]) mode[0].querySelector('span').textContent = '30 Grande Rue · gratuit · paiement sur place';
+    if (mode[0]) mode[0].querySelector('span').textContent = '32 Grande Rue · gratuit · paiement sur place';
     /* step 1: the times Growth Gusto accepts today */
     const pk = $('.co-picker', co); const nav1 = steps[1] && $('[data-next]', steps[1]);
     const paintSlots = () => { const D = dset(G.menu); if (!D.includes(G.day)) G.day = D[0] || ''; const L = G.day ? GGBoutique.slots(G.menu, G.day) : []; if (!L.includes(G.slot)) G.slot = L[0] || '';
@@ -302,7 +308,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
       Object.keys(E.q).forEach((k) => { if (!G.by[k]) delete E.q[k]; }); E.f = E.f.filter((x) => F.some((f) => f.id === x.fo));
       menu.innerHTML = (F.length ? F.map(foHtml).join('') : '') + (L.length ? L.map((it) => { const n = E.q[it.id] || 0, out = left(it.id) <= 0;
         return `<article class="as-item${n ? ' on' : ''}${out ? ' gg-out' : ''}" data-id="${esc(it.id)}"><div class="as-ill">${illus(it.id)}</div>
-        <div class="as-txt"><h3>${esc(it.t)}</h3>${it.b ? `<p>${esc(it.b)}</p>` : ''}${it.w ? `<span class="as-w">${esc(it.w)}</span>` : ''}${out ? '<span class="gg-stk">Épuisé</span>' : ''}</div>
+        <div class="as-txt"><h3>${esc(it.t)}</h3>${it.b ? `<p>${esc(it.b)}</p>` : ''}${it.w ? `<span class="as-w">${esc(it.w)}</span>` : ''}${out ? '<span class="gg-stk">Épuisé</span>' : stkTxt(it) ? `<span class="gg-stk${stkLow(it) ? '' : ' ok'}">${stkTxt(it)}</span>` : ''}</div>
         <div class="as-buy"><b>${eur(it.p)}</b><div class="stepper"><button type="button" data-m="-1" aria-label="Retirer">−</button><span>${n}</span><button type="button" data-m="1" aria-label="Ajouter"${out ? ' disabled' : ''}>+</button></div></div></article>`; }).join('')
         : F.length ? '' : '<p class="gg-none">Les plats du midi ne sont pas encore en ligne. En attendant, faites vos courses dans la <a href="#boutique">boutique</a>, ou appelez le 09 63 67 76 39.</p>');
     }
@@ -393,7 +399,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     $$('.hero-txt .btns', home).forEach((b) => { const d = document.createElement('div'); d.className = 'gg-cc';
       d.innerHTML = `<p><b>Nouveau : le Click &amp; Collect.</b> Choisissez vos produits et votre menu du midi en ligne, on prépare votre panier, vous le récupérez en boutique sans attendre.</p><a class="btn gg-cc-b" href="#boutique">Commander en Click &amp; Collect <span>→</span></a>`; b.replaceWith(d); });
     const tg = $('#taglio'); if (tg) home.appendChild(tg);
-    const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 30 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique.</p>`; }
+    const hd = $('.sh', shop); if (hd) { const t = hd.firstElementChild; if (t) t.innerHTML = `<div class="eyebrow">Casa Innocenti · 32 Grande Rue, Saint-Priest</div><h1 class="ph">L’épicerie italienne <span class="it">de Saint-Priest.</span></h1><p class="gg-lead">Choisissez un rayon, ajoutez au panier, c’est prêt en boutique.</p>`; }
     /* the old pages « Boutique » and « À emporter » are now this page: their links open it on the right rayon */
     const goShop = (f) => { if (f) { ONE.f = f === '__menu' ? null : f; if (G.menu) { paintChips(); renderGrid('#grid', 999); } }
       let a = $('#gg-go'); if (!a) { a = document.createElement('a'); a.id = 'gg-go'; a.href = '#shop'; a.hidden = true; document.body.appendChild(a); } a.click(); };
@@ -404,7 +410,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
   }
   /* the rayons are a menu (Marceau 2026-11-21): after « Click & Collect » no product shows, the visitor picks a tab
      (Charcuterie, Fromages, Épicerie salée…) and its products open line by line. The Growth Gusto rayons are grouped into these tabs. */
-  const TABS = [
+  const TABS0 = [
     { k: 'charc', t: 'Charcuterie', d: 'Jambons, salami, mortadelle, coupés à la commande', il: 'salame', r: ['Charcuterie'] },
     { k: 'from', t: 'Fromages', d: 'Parmigiano, burrata, pecorino, gorgonzola', il: 'pecorino', r: ['Fromages'] },
     { k: 'sal', t: 'Épicerie salée', d: 'Pâtes, sauces, huiles, riz et conserves', il: 'pomodoro', r: ['Pâtes et sauces', 'Huiles', 'Épicerie', 'Riz'] },
@@ -414,12 +420,21 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     { k: 'foc', t: 'Focaccia', d: 'Focacce à la part et menus du midi', il: 'focaccia', r: [] },
     { k: 'bois', t: 'Vins et boissons', d: 'Vins, apéritifs, sodas italiens, café', il: 'vino', r: ['Apéritif et vins', 'Boissons', 'Café à emporter'] },
     { k: 'gaspi', t: 'Anti-gaspi', d: 'Dates courtes à prix réduit', il: 'board', r: ['Anti-gaspi'] }];
-  const tabOf = (p) => { if (/focacc/i.test(p.n)) return 'foc'; const t = TABS.find((x) => x.r.includes(p.c)); return t ? t.k : 'sal'; };
-  const mTab = (f) => { const nm = (f.t || '') + ' ' + (f.steps || []).map((st) => st.ids.map((id) => (G.by[id] || {}).t || '').join(' ')).join(' ');
-    if (!f.lot && /focacc/i.test(nm)) return 'foc'; if (/cannon|cannol|tiramis|biscot/i.test(nm)) return 'suc'; const c = catT()[f.c]; const t = TABS.find((x) => x.r.includes(c)); return t ? t.k : 'foc'; };
+  /* the tabs set in Growth Gusto (Boutique › Réglages › Onglets du site): name, sentence, order and rayons; none = the ones above.
+     Anti-gaspi stays last. The illustration follows the name. */
+  const ILL_OF = [[/charc|salum|jambon/, 'salame'], [/fromag|formag/, 'pecorino'], [/sucr|biscu|dolc|douceur/, 'biscotti'], [/panet|pandor|noel|noël/, 'panettone'], [/plat|arancin|midi|traiteur/, 'arancino'], [/focac/, 'focaccia'], [/vin|boiss|cafe|café|apero|apéro/, 'vino'], [/sal|epic|épic|pate|pâte|huile/, 'pomodoro']];
+  let TABS = TABS0, TABS_OF = null;
+  const tabsFromGG = () => { const L = (G.menu && G.menu.tabs) || []; if (!L.length) { TABS = TABS0; return; } const ct = catT();
+    TABS = L.map((x) => { const n = x.t.toLowerCase(), old = TABS0.find((y) => y.t.toLowerCase() === n); return { k: old ? old.k : x.k /* « À emporter » opens 'foc' */, t: x.t, d: x.d, il: old ? old.il : ((ILL_OF.find(([re]) => re.test(n)) || [, 'board'])[1]), r: x.c.map((c) => ct[c]).filter(Boolean), foc: /focac/.test(n) }; });
+    if (!TABS.some((t) => t.r.includes('Anti-gaspi'))) TABS.push(TABS0[TABS0.length - 1]); };
+  const tabsSync = () => { if (G.menu && TABS_OF !== G.menu) { TABS_OF = G.menu; tabsFromGG(); } };
+  const tabOf = (p) => { tabsSync(); const fk = TABS.find((x) => x.foc || x.k === 'foc'); if (fk && /focacc/i.test(p.n)) return fk.k; const t = TABS.find((x) => x.r.includes(p.c)); return t ? t.k : (TABS.find((x) => x.k === 'sal') || TABS.find((x) => !x.foc && x.r.length) || TABS[0]).k; };
+  const mTab = (f) => { tabsSync(); const nm = (f.t || '') + ' ' + (f.steps || []).map((st) => st.ids.map((id) => (G.by[id] || {}).t || '').join(' ')).join(' ');
+    const fk = (TABS.find((x) => x.foc || x.k === 'foc') || {}).k, sk = (TABS.find((x) => x.k === 'suc' || /sucr|douceur|dolc/i.test(x.t)) || {}).k;
+    if (!f.lot && fk && /focacc/i.test(nm)) return fk; if (sk && /cannon|cannol|tiramis|biscot/i.test(nm)) return sk; const c = catT()[f.c]; const t = TABS.find((x) => x.r.includes(c)); return t ? t.k : fk || (TABS[0] || {}).k; };
   const tabList = (k) => P.filter((p) => tabOf(p) === k);
   const tabMenus = (k) => ((G.menu && G.menu.menus) || []).filter((f) => mTab(f) === k);
-  const tabsOn = () => TABS.filter((t) => tabList(t.k).length || tabMenus(t.k).length);
+  const tabsOn = () => tabsSync() || TABS.filter((t) => tabList(t.k).length || tabMenus(t.k).length);
   const tIll = (k) => { const K = (typeof ILLUS === 'object' && ILLUS[k]) ? k : 'board'; try { return illus0(K); } catch (e) { return ''; } };
   function paintChips() {
     const f = $('#filters'); if (!f || !G.menu) return; const L = tabsOn();
@@ -490,7 +505,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
     if (G.F.length) { if (!cartN()) body.innerHTML = '';
       body.insertAdjacentHTML('afterbegin', G.F.map((x, i) => `<div class="line gg-mline"><span class="line-ill" style="--tint:#F7E8D0">${mIll(F.find((f) => f.id === x.fo) || x)}</span><div><strong>${esc(x.t)}</strong><small>${esc(x.what)}</small><div class="qty"><button type="button" data-ggfx="${i}" aria-label="Retirer ${esc(x.t)}">Retirer</button></div></div><b>${eur(x.p)}</b></div>`).join('')); }
     $('#cart-total') && ($('#cart-total').textContent = eur(t));
-    if (G.F.length) { $$('[data-count]').forEach((el) => { el.textContent = cartN() + G.F.length; }); const fr = $('#cart-free'); if (fr) fr.innerHTML = 'Retrait gratuit en boutique · <b>prêt en 2 h</b>, 30 Grande Rue'; const br = $('#cart-bar'); if (br) br.style.setProperty('--pct', '100%'); }
+    if (G.F.length) { $$('[data-count]').forEach((el) => { el.textContent = cartN() + G.F.length; }); const fr = $('#cart-free'); if (fr) fr.innerHTML = 'Retrait gratuit en boutique · <b>prêt en 2 h</b>, 32 Grande Rue'; const br = $('#cart-bar'); if (br) br.style.setProperty('--pct', '100%'); }
   }
   /* « Commander » with only menus in the cart: the site's checkout waits for a product, open it here */
   document.addEventListener('click', (e) => { if (!e.target.closest('.drawer .pay') || cartN() || !G.F.length) return; e.stopImmediatePropagation();

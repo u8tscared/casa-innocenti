@@ -1,6 +1,6 @@
 # Casa Innocenti
 
-Maquette de site pour Casa Innocenti, épicerie fine italienne (30 Grande Rue, Saint-Priest).
+Maquette de site pour Casa Innocenti, épicerie fine italienne (32 Grande Rue, Saint-Priest).
 
 - Site en ligne : https://u8tscared.github.io/casa-innocenti/
 - Version « Notte » (plus spectaculaire, ambiance nuit) : https://u8tscared.github.io/casa-innocenti/notte/ (`notte/index.html`).
