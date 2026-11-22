@@ -1786,7 +1786,7 @@ html.cart-open,html.qv-open,html.co-open,html.cart-open body,html.qv-open body,h
 #grid.gg-lines .prod-img .quick,#grid.gg-lines .prod-cat,#grid.gg-lines .prod-tag{display:none}
 #grid.gg-lines .prod-meta{display:grid;grid-template-columns:1fr auto;grid-template-areas:"n r" "d r";column-gap:14px;row-gap:2px;align-items:center;padding:0}
 #grid.gg-lines .prod-name{grid-area:n;margin:0;font-size:17px;line-height:1.25;cursor:pointer}
-#grid.gg-lines .prod-desc{grid-area:d;margin:0;font-size:13px;opacity:.7}
+#grid.gg-lines .prod-desc{grid-area:d;margin:0;font-size:13px;line-height:1.35;opacity:.75;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #grid.gg-lines .prod-row{grid-area:r;display:flex;align-items:center;gap:12px;margin:0}
 #grid.gg-lines .prod-price{font-size:16px;white-space:nowrap}
 @media (max-width:520px){#grid.gg-tiles{grid-template-columns:1fr;gap:10px}.gg-tile{grid-template-columns:68px 1fr auto;gap:12px;padding:10px 14px 10px 10px}.gg-tile-ill{width:68px;height:68px}.gg-tile-ill svg{width:62px;height:62px}.gg-tile-tx b{font-size:20px}.gg-tile-tx em{font-size:13px}
@@ -1851,7 +1851,7 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     const L = M.items.filter((it) => it.p > 0);
     L.forEach((it) => { G.by[it.id] = it; });
     P.length = 0;
-    L.forEach((it) => P.push({ id: it.id, n: it.t, d: it.gaspi ? `Au lieu de ${eur(it.old || it.p)}${it.dlc ? ' · date courte' : ''}` : it.kg ? `${eur(it.kg.pkg)} le kilo` : (it.b || ''), w: it.kg ? `les ${gT(it.kg.step)}` : it.w || '', p: it.p,
+    L.forEach((it) => P.push({ id: it.id, n: it.t, d: it.gaspi ? `Au lieu de ${eur(it.old || it.p)}${it.dlc ? ' · date courte' : ''}` : it.kg ? [`${eur(it.kg.pkg)} le kilo`, it.d].filter(Boolean).join(' · ') : (it.d || it.b || ''), w: it.kg ? `les ${gT(it.kg.step)}` : it.d ? '' : it.w || '', p: it.p, /* it.d = brand · weight. the shop's description (Growth Gusto › Boutique) */
       c: it.gaspi ? 'Anti-gaspi' : (cat[it.c] || 'Épicerie'), tag: it.gaspi ? `−${it.pct || ''} %` : '', gg: it }));
     (window.PA || []).forEach((x) => { if (!/^ag-/.test(x.id)) return; const c = $(`.agc[data-id="${x.id}"]`); x.stock = 0; if (c) c.hidden = true; });
     $$('[data-box-left]').forEach((el) => { el.textContent = 0; });
