@@ -1814,6 +1814,7 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
 .gg-pl-r>span{display:grid;gap:2px;min-width:0}.gg-pl-r>span em{font-style:normal;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}.gg-pl-r.on>span em{color:var(--fg)}
 .gg-pl-r .stepper span{min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
 .gg-pl-tot{position:sticky;bottom:0;display:grid;gap:10px;padding:12px 0 4px;background:var(--paper,var(--bg));border-top:1px dashed var(--line)}
+.gg-pl-nb{margin:-4px 0 0;font-size:12.5px;line-height:1.4;color:var(--mute)}
 .gg-pl-sum{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}.gg-pl-sum b{color:var(--fg);font-size:20px;font-family:var(--display,Georgia,serif);font-weight:500}
 @media (max-width:900px){.gg-pl-tot{bottom:calc(62px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:520px){.gg-pl-sz{grid-template-columns:repeat(3,1fr)}.gg-pl-sz button{padding:10px 4px}.gg-pl-sz button b{font-size:15px}}.gg-mline .qty button{width:auto;padding:0 10px;font-size:12px}
@@ -2225,6 +2226,7 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
           return `<div class="gg-pl-r${k ? ' on' : ''}"><span><b>${esc(it.t || '')}</b><em>${k ? `${gT(k * step)} · ${eur(plEur(f, id, k))}` : `${eur((it.kg || {}).pkg || 0)} le kilo · ${eur(plEur(f, id, 1))} les ${gT(step)}`}</em></span>
             <div class="stepper"><button type="button" data-plw="${esc(id)}" data-d="-1" aria-label="${esc(gT(step))} de moins"${k ? '' : ' disabled'}>−</button><span>${k ? gT(k * step) : '0 g'}</span><button type="button" data-plw="${esc(id)}" data-d="1" aria-label="${esc(gT(step))} de plus"${k < mx ? '' : ' disabled'}>+</button></div></div>`; }).join('')}</div></div>`).join('')}
         <div class="gg-pl-tot"><div class="gg-pl-sum"><span>${st.sz >= 0 ? `Plateau ${esc(String(f.sz[st.sz].t).toLowerCase())} ${eur(f.sz[st.sz].p)}` : 'Choisissez la taille'}${g ? ` + ${gT(g)} au poids` : ''}</span><b>${eur(tot)}</b></div>
+        <p class="gg-pl-nb">Prix indicatif : la coupe peut varier de quelques grammes, le prix exact est ajusté au retrait.</p>
         <button type="button" class="btn gg-fo-go" data-pladd="${esc(f.id)}"${ok ? '' : ' disabled'}>${ok ? `Ajouter au panier · ${eur(tot)}` : st.sz < 0 ? 'Choisissez la taille du plateau' : 'Ajoutez un produit au poids'}</button></div></div>`; }
     return `<article class="gg-mn gg-mn-pl${open ? ' open' : ''}" data-mn="${esc(f.id)}"><div class="gg-mn-h" data-mopen="${esc(f.id)}"><span class="gg-mn-ill">${mIll(f)}</span>
       <span class="gg-mn-tx"><small>À composer</small><b>${esc(f.t)}</b><em>${esc(what)}</em>${n ? `<i>${n} au panier</i>` : ''}</span>
