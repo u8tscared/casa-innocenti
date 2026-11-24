@@ -1827,17 +1827,18 @@ html,body{overflow-x:hidden;overflow-x:clip;max-width:100%;overscroll-behavior-x
     'Plats du midi': '#F7E8D0', Riz: '#F4EEDC', Arancini: '#F8EBC8', Desserts: '#F4E6D6', Formules: '#EFE6DA', 'Anti-gaspi': '#F6DCDC', Autres: '#EEE9E0' });
   /* « Décor des photos » (Growth Gusto › Commandes en ligne › Apparence, w/gg-decor.js): with the Thème Noël switch on, or the decor
      chosen in Growth Gusto, every product photo is cut out of its white background and stands on a wooden table in front of a fir tree
-     with fairy lights. The product sheet and the cart keep the white background. A photo that cannot be cut keeps its plain tile. */
+     with fairy lights. The quick view (#qv, the big photo when a product is touched) shows the same background (Marceau 2026-11-24);
+     the cart keeps the white background. A photo that cannot be cut keeps its plain tile. */
   let gdT = 0, gdOn = '';
   const gdWant = () => (document.documentElement.classList.contains('noel') ? 'noel' : (G.menu && G.menu.decor) || '');
   function gdRun() {
-    const D = window.GGDecor, want = gdWant(), imgs = $$('.prod.gg-hp .prod-img img.gg-ph');
+    const D = window.GGDecor, want = gdWant(), imgs = $$('.prod.gg-hp .prod-img img.gg-ph, #qv .qv-ill img.gg-ph');
     if (!want) { if (D && gdOn) D.restore(imgs); gdOn = ''; const st = document.getElementById('gdCss'); if (st) st.textContent = ''; return; }
     if (!D) { if (!document.getElementById('gdJs')) { const s = document.createElement('script'); s.id = 'gdJs'; s.src = 'https://app.growthgusto.fr/w/gg-decor.js'; s.onload = gdRun; document.head.appendChild(s); } return; }
     const img = (G.menu && G.menu.decorImg) || '', key = want + (want === 'perso' ? img : '');
     if (!D.DECORS[want] && !(want === 'perso' && img)) return;
     if (gdOn !== key) { let st = document.getElementById('gdCss'); if (!st) { st = document.createElement('style'); st.id = 'gdCss'; document.head.appendChild(st); }
-      st.textContent = D.css('.prod .prod-img', want, img) + '.prod .prod-img:has(> svg.ill){border-radius:0}' + '.prod.gg-hp .prod-img:has(img.gd-cut){border-radius:0}.prod.gg-hp .prod-img:has(img.gd-cut):after{display:none}.prod.gg-hp .prod-img img.gd-cut{inset:10% 13% 17%!important;width:74%!important;height:73%!important}';
+      st.textContent = D.css('.prod .prod-img', want, img) + '.prod .prod-img:has(> svg.ill){border-radius:0}' + '.prod.gg-hp .prod-img:has(img.gd-cut){border-radius:0}.prod.gg-hp .prod-img:has(img.gd-cut):after{display:none}.prod.gg-hp .prod-img img.gd-cut{inset:10% 13% 17%!important;width:74%!important;height:73%!important}' + D.css('#qv .qv-ill', want, img) + '#qv .qv-ill:has(img.gd-cut){border-radius:0;padding:8% 12% 12%}#qv .qv-ill img.gd-cut{width:100%;height:100%}';
       gdOn = key; }
     D.apply(imgs);
   }
