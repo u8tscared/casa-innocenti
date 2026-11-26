@@ -6,6 +6,7 @@
 <meta name="description" content="Casa Innocenti, épicerie fine italienne à Saint-Priest : boutique en ligne, à emporter, anti-gaspi.">
 <meta name="robots" content="noindex">
 <title>Casa Innocenti · Notte</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,800&amp;text=GrowthGusto&amp;display=swap">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;1,6..96,400;1,6..96,500&family=Jost:wght@300;400;500;600&display=swap">
@@ -278,11 +279,16 @@ footer.ft{background:#0E3B2C;color:#F3F0E8;overflow:hidden;position:relative}
 .ft-word em{color:#F2B8B0}
 .ft-word .ch{display:inline-block}
 .ft-legal{display:flex;justify-content:space-between;gap:14px 24px;flex-wrap:wrap;font-size:12.5px;opacity:.7;padding-block:22px 28px}
-.ft-gg{display:flex;justify-content:center;border-top:1px solid rgba(243,240,232,.12);padding-block:16px 18px}
-.ft-gg a{display:inline-flex;align-items:baseline;gap:.6em;text-decoration:none;color:inherit;opacity:.7;transition:opacity .3s,color .3s}
-.ft-gg a:hover,.ft-gg a:focus-visible{opacity:1;color:#F2B8B0}
-.ft-gg .k{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase}
-.ft-gg b{font-family:var(--display);font-style:italic;font-weight:400;font-size:15px;letter-spacing:.01em}
+.ft-gg{display:flex;justify-content:center;border-top:1px solid rgba(243,240,232,.12);padding-block:14px 16px}
+.ft-gg a{display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:inherit;padding:6px 4px}
+.ft-gg .k{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;opacity:.7;transition:opacity .3s}
+.ft-gg .gl{display:inline-flex;align-items:center;gap:8px;transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
+.ft-gg .mk{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#FFFDF8;box-shadow:inset 0 0 0 1.5px #DCCFB8,0 1px 2px rgba(0,0,0,.12)}
+.ft-gg .mk svg{display:block}
+.ft-gg b{font:800 18px/1 "Bricolage Grotesque",var(--body),system-ui,sans-serif;font-variation-settings:"opsz" 96,"wdth" 88;letter-spacing:-.045em;white-space:nowrap}
+.ft-gg b i{font-style:normal;color:#C9B9FF}
+.ft-gg a:hover .k,.ft-gg a:focus-visible .k{opacity:1}
+.ft-gg a:hover .gl,.ft-gg a:focus-visible .gl{transform:translateY(-2px)}
 .ft-tri{display:flex;height:6px}.ft-tri i{flex:1;background:#1F7A46}.ft-tri i:nth-child(2){background:#F3F0E8}.ft-tri i:nth-child(3){background:#C8202F}
 @media(max-width:900px){.ft-top{grid-template-columns:1fr}.ft-cols{grid-template-columns:1fr 1fr;row-gap:32px}.ft-items svg:nth-child(n+5){display:none}}
 /* liseret tricolore qui descend avec le scroll */
@@ -877,7 +883,7 @@ header.site{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-fil
     <div class="ft-word" id="ft-word">Casa <em>Innocenti</em></div>
   </div>
   <div class="wrap ft-legal"><span>© 2026 Casa Innocenti · Épicerie fine italienne</span><span>Paiement au retrait · carte ou espèces</span><span><a href="../mentions-legales/">Mentions légales</a> · Allergènes : demandez-nous en boutique</span></div>
-  <div class="ft-gg"><a href="https://growthgusto.fr/?utm_source=casa-innocenti&amp;utm_medium=footer&amp;utm_campaign=propulse-par" target="_blank" rel="noopener"><span class="k">Propulsé par</span><b>Growth Gusto</b></a></div>
+  <div class="ft-gg"><a href="https://growthgusto.fr/?utm_source=casa-innocenti&amp;utm_medium=footer&amp;utm_campaign=propulse-par" target="_blank" rel="noopener"><span class="k">Propulsé par</span><span class="gl"><span class="mk"><svg viewBox="-2 -2 100 100" width="18" height="18" aria-hidden="true"><g transform="translate(-2 -2.33)" fill="none" stroke-linejoin="miter" stroke-miterlimit="4"><g transform="translate(4 4.67)" stroke="#C9B9FF"><path d="M86 16H50A34 34 0 0 0 25.96 74.04" stroke-width="14"/><path d="M40.5 83.5 80 44M52 42h30v30" stroke-width="12.5"/></g><g stroke="#5B2BFF"><path d="M86 16H50A34 34 0 0 0 25.96 74.04" stroke-width="14"/><path d="M40.5 83.5 80 44M52 42h30v30" stroke-width="12.5"/></g></g></svg></span><b>Growth<i>Gusto</i></b></span></a></div>
   <div class="ft-tri"><i></i><i></i><i></i></div>
 </footer>
 <nav class="tabs" aria-label="Navigation"><a href="#accueil" data-nav="accueil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V10a8 8 0 0 1 16 0v11zM9 21v-6h6v6"/></svg>Accueil</a><a href="#boutique" data-nav="boutique"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18l-2 11H5zM8 9l3-6M16 9l-3-6"/></svg>Boutique</a><a href="#emporter" data-nav="emporter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 13H5zM9 8V6a3 3 0 0 1 6 0v2"/></svg>À emporter</a><a href="#anti-gaspi" data-nav="anti-gaspi" class="ag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg>−50 %</a><a href="#la-casa" data-nav="la-casa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.500 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>La Casa</a></nav>
